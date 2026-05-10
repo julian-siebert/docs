@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-89b539c2.js";
+            window.path_to_searchindex_js = "searchindex-d5f32c5b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-09aa5db1.js"></script>
+        <script src="toc-548557f9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -185,30 +185,266 @@
 <h1 id="buffy-reference"><a class="header" href="#buffy-reference">Buffy Reference</a></h1>
 <p>The reference covers the details of various areas of Buffy.</p>
 <ul>
-<li><a href="#the-manifest-format">The Manifest Format</a></li>
+<li><a href="#the-manifest-format">The Manifest Format</a> — The <code>Buffy.toml</code> package manifest.</li>
+<li><a href="#profiles-format">Profiles Format</a> — Per-language target configuration in <code>.buffy/</code>.
+<ul>
+<li><a href="#golang-profiles">Golang</a> — Publish Go modules via Git.</li>
+<li><a href="#java">Java</a> — Publish to Maven Central or via Git.</li>
+<li><a href="#kotlin">Kotlin</a> — Publish to Maven Central or via Git.</li>
+<li><a href="#rust">Rust</a> — Publish to crates.io or via Git.</li>
+<li><a href="#javascript">JavaScript</a> — Publish to npm or via Git.</li>
+<li><a href="#typescript">TypeScript</a> — Publish to npm or via Git.</li>
+</ul>
+</li>
+<li><a href="#environment-variables">Environment Variables</a> — Credentials and configuration via environment.</li>
+<li><a href="#command-line-interface">Command-Line Interface</a> — The <code>buffy</code> CLI.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="the-manifest-format"><a class="header" href="#the-manifest-format">The Manifest Format</a></h1>
 <p>The <code>Buffy.toml</code> file for each package is called its <em>manifest</em>. It is written
 in the [TOML] format. It contains metadata that is needed to compile and publish
-the protocol buffers to all supported language’s targets.</p>
+the protocol buffers to all supported language targets.</p>
 <p>Every manifest file consists of the following sections:</p>
 <ul>
-<li><a href="#the-package-section"><code>[package]</code></a> — Defines a package.</li>
+<li><a href="#the-package-section"><code>[package]</code></a> — Defines a package.
+<ul>
+<li><a href="#the-name-field"><code>name</code></a> — The name of the package.</li>
+<li><a href="#the-version-field"><code>version</code></a> — The version of the package.</li>
+<li><a href="#the-description-field"><code>description</code></a> — A description of the package.</li>
+<li><a href="#the-license-field"><code>license</code></a> — The package license.</li>
+<li><a href="#the-homepage-field"><code>homepage</code></a> — URL of the package homepage.</li>
+<li><a href="#the-authors-field"><code>authors</code></a> — The authors of the package.</li>
 </ul>
+</li>
+<li><a href="#the-source-section"><code>[source]</code></a> — Configures where <code>.proto</code> files live.
+<ul>
+<li><a href="#the-path-field"><code>path</code></a> — Path to the directory containing <code>.proto</code> files.</li>
+</ul>
+</li>
+</ul>
+<p>Profile configuration (the per-language publishing targets in <code>.buffy/</code>) is
+documented separately in <a href="#profiles-format">the profiles chapter</a>.</p>
 <h2 id="the-package-section"><a class="header" href="#the-package-section">The <code>[package]</code> section</a></h2>
 <p>The first section in a <code>Buffy.toml</code> is <code>[package]</code>.</p>
 <pre><code class="language-toml">[package]
-name = "tomato" # the name of the package
+name = "tomato"   # the name of the package
 version = "0.1.0" # the current version, obeying semver
 </code></pre>
+<p>All fields in this section are required. The metadata defined here is embedded
+in every published artifact across all language targets (e.g., it ends up in
+<code>Cargo.toml</code>, the Maven POM, <code>package.json</code>, and the AUTHORS/LICENSE files of
+generated Go modules).</p>
 <h3 id="the-name-field"><a class="header" href="#the-name-field">The <code>name</code> field</a></h3>
-<p>The package name is an identifier used to refer to the package.</p>
-<p>The name must use only [alphanumeric] characters or <code>-</code> or <code>_</code>, and cannot be empty.</p>
+<p>The package name is an identifier used to refer to the package. It serves as
+the default base name for language-specific artifacts (Cargo crate name, Maven
+<code>artifactId</code>, npm package name, etc.). Profiles may override the name per
+language.</p>
+<p>The name must use only <a href="https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric">alphanumeric</a> characters or <code>-</code> or <code>_</code>, and cannot be
+empty.</p>
 <ul>
 <li>Only ASCII characters are allowed.</li>
 <li>Use a maximum of 32 characters of length.</li>
 </ul>
+<pre><code class="language-toml">[package]
+name = "tomato"
+</code></pre>
+<h3 id="the-version-field"><a class="header" href="#the-version-field">The <code>version</code> field</a></h3>
+<p>The <code>version</code> field is formatted according to the <a href="https://semver.org">SemVer</a> specification:</p>
+<p>Versions must have three numeric parts: the major version, the minor version,
+and the patch version.</p>
+<p>A pre-release part can be added after a dash such as <code>1.0.0-alpha</code>. The
+pre-release part may be separated with periods to distinguish separate
+components. Numeric components will use numeric comparison while everything
+else will be compared lexicographically. For example, <code>1.0.0-alpha.11</code> is
+higher than <code>1.0.0-alpha.4</code>.</p>
+<p>A metadata part can be added after a plus, such as <code>1.0.0+21AF26D3</code>. This is
+for informational purposes only and is generally ignored.</p>
+<pre><code class="language-toml">[package]
+# ...
+version = "0.1.0"
+</code></pre>
+<p>The version applies to all language targets when publishing. To override the
+version for a single run (e.g., in CI where it is derived from a Git tag), use
+the <code>--publish-version</code> flag:</p>
+<pre><code class="language-sh">buffy --publish --publish-version 1.2.3
+</code></pre>
+<h3 id="the-description-field"><a class="header" href="#the-description-field">The <code>description</code> field</a></h3>
+<p>The description is a short blurb about the package. Registries that display it
+(such as crates.io for the Rust target or npmjs.com for the JavaScript and
+TypeScript targets) will show this text on the package page. This should be
+plain text (not Markdown).</p>
+<pre><code class="language-toml">[package]
+# ...
+description = "Tomato protocol buffers for the salad service"
+</code></pre>
+<h3 id="the-license-field"><a class="header" href="#the-license-field">The <code>license</code> field</a></h3>
+<p>The <code>license</code> field contains the SPDX expression of the software license that
+the package is released under.</p>
+<p>The value is interpreted as an <a href="https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/">SPDX 2.3 license expression</a>. The name must be
+a known license from the <a href="https://spdx.org/licenses/">SPDX license list</a>. SPDX expressions support <code>AND</code>
+and <code>OR</code> operators to combine multiple licenses.</p>
+<pre><code class="language-toml">[package]
+# ...
+license = "MIT OR Apache-2.0"
+</code></pre>
+<p>Using <code>OR</code> indicates the user may choose either license. Using <code>AND</code> indicates
+the user must comply with both licenses simultaneously. Some examples:</p>
+<ul>
+<li><code>MIT</code></li>
+<li><code>MIT OR Apache-2.0</code></li>
+<li><code>LGPL-2.1-only AND MIT AND BSD-2-Clause</code></li>
+</ul>
+<p>When the manifest declares multiple licenses, Buffy generates one
+<code>LICENSE-&lt;id&gt;</code> file per license plus an index <code>LICENSE</code> file describing the
+combination. With a single license, a single <code>LICENSE</code> file is generated. The
+full license text is embedded from the SPDX database.</p>
+<p>Custom <code>LicenseRef-*</code> identifiers are not supported.</p>
+<h3 id="the-homepage-field"><a class="header" href="#the-homepage-field">The <code>homepage</code> field</a></h3>
+<p>The <code>homepage</code> field should be a URL to a site that is the home page for your
+package.</p>
+<pre><code class="language-toml">[package]
+# ...
+homepage = "https://github.com/example/tomato"
+</code></pre>
+<p>The homepage URL is surfaced in language-specific metadata fields where
+applicable: <code>homepage</code> in <code>Cargo.toml</code>, <code>&lt;url&gt;</code> in the Maven POM, <code>homepage</code> in
+<code>package.json</code>.</p>
+<h3 id="the-authors-field"><a class="header" href="#the-authors-field">The <code>authors</code> field</a></h3>
+<p>The <code>authors</code> field lists the people or organizations that are considered the
+authors of the package. An optional email address may be included within
+angled brackets at the end of each author entry.</p>
+<pre><code class="language-toml">[package]
+# ...
+authors = [
+    "Jane Doe &lt;jane@example.com&gt;",
+    "John Smith",
+    "Acme Corp &lt;opensource@acme.com&gt;",
+]
+</code></pre>
+<p>Each entry is parsed into a name and an optional email. Both are then forwarded
+to language-specific metadata: <code>&lt;developer&gt;</code> entries in the Maven POM, the
+<code>author</code> field in <code>package.json</code>, the <code>authors</code> array in <code>Cargo.toml</code>, and an
+<code>AUTHORS</code> file in generated Go modules.</p>
+<p>If an entry is malformed (e.g., empty, or containing brackets without an
+email), Buffy reports a diagnostic pointing at the offending entry.</p>
+<h2 id="the-source-section"><a class="header" href="#the-source-section">The <code>[source]</code> section</a></h2>
+<p>The <code>[source]</code> section tells Buffy where to find the <code>.proto</code> files for code
+generation.</p>
+<pre><code class="language-toml">[source]
+path = "proto"
+</code></pre>
+<p>If the section is omitted, the default is used:</p>
+<pre><code class="language-toml">[source]
+path = "src"
+</code></pre>
+<h3 id="the-path-field"><a class="header" href="#the-path-field">The <code>path</code> field</a></h3>
+<p>The relative path (from <code>Buffy.toml</code>) to the directory containing <code>.proto</code>
+files. Buffy walks this directory recursively and passes every <code>.proto</code> file
+it finds to <code>protoc</code>.</p>
+<p>The path is also used as <code>--proto_path</code> when invoking <code>protoc</code>, so imports
+between <code>.proto</code> files should be relative to this root.</p>
+<pre><code class="language-toml">[source]
+path = "proto"
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="profiles-format"><a class="header" href="#profiles-format">Profiles Format</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="golang-profiles"><a class="header" href="#golang-profiles">Golang Profiles</a></h1>
+<p>The <code>golang</code> profile generates a Go module from your <code>.proto</code> files and
+publishes it to a Git repository. Go modules are versioned by Git tags, so
+the consuming side only needs <code>go get &lt;module&gt;@&lt;tag&gt;</code>.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-git-variant"><code>git</code></a> — Push the generated module to a Git remote.</li>
+</ul>
+<h2 id="required-tools"><a class="header" href="#required-tools">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>protoc-gen-go</code> — Go code generator plugin.</li>
+<li><code>protoc-gen-go-grpc</code> — gRPC plugin (only when <code>grpc = true</code>).</li>
+<li><code>go</code> — Go toolchain (used for <code>go mod init</code>, <code>go mod tidy</code>, <code>go build</code>).</li>
+<li><code>git</code> — Used to commit, tag, and push the generated module.</li>
+</ul>
+<p><code>buffy check</code> verifies that all of these are installed and on the <code>PATH</code>,
+emitting installation hints if anything is missing.</p>
+<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<p>Generates the Go module under <code>target/&lt;profile&gt;/</code>, runs <code>go mod init</code> and
+<code>go mod tidy</code> to populate <code>go.sum</code>, then commits the result and pushes it
+to the configured remote with a <code>v&lt;version&gt;</code> tag.</p>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-toml"># .buffy/golang.toml
+[golang.git]
+module = "github.com/example/tomato-go"
+remote = "git@github.com:example/tomato-go.git"
+branch = "main"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="fields"><a class="header" href="#fields">Fields</a></h3>
+<ul>
+<li><a href="#the-module-field"><code>module</code></a> — The Go module path.</li>
+<li><a href="#the-remote-field"><code>remote</code></a> — Git remote URL.</li>
+<li><a href="#the-branch-field"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-grpc-field"><code>grpc</code></a> — Whether to generate gRPC service stubs.</li>
+<li><a href="#the-keep-field"><code>keep</code></a> — Files to preserve across publishes.</li>
+</ul>
+<h4 id="the-module-field"><a class="header" href="#the-module-field">The <code>module</code> field</a></h4>
+<p>The Go module path, as it will appear in <code>go.mod</code> and as consumers will use
+it in their <code>import</code> statements. Conventionally matches the host and path of
+the <code>remote</code>.</p>
+<pre><code class="language-toml">module = "github.com/example/tomato-go"
+</code></pre>
+<p>This value is passed to <code>protoc-gen-go</code> as <code>--go_opt=module=...</code> so that the
+generated package paths are rewritten correctly.</p>
+<h4 id="the-remote-field"><a class="header" href="#the-remote-field">The <code>remote</code> field</a></h4>
+<p>The Git URL the generated module is pushed to. SSH URLs are recommended
+because Buffy disables Git’s terminal prompt; HTTPS URLs work only if
+credentials are pre-cached or supplied via a credential helper.</p>
+<pre><code class="language-toml">remote = "git@github.com:example/tomato-go.git"
+</code></pre>
+<h4 id="the-branch-field"><a class="header" href="#the-branch-field">The <code>branch</code> field</a></h4>
+<p>The branch to push to. Buffy force-pushes the generated content to this
+branch on every publish; the previous content is replaced (with the
+exception of files listed in <code>keep</code>).</p>
+<pre><code class="language-toml">branch = "main"
+</code></pre>
+<h4 id="the-grpc-field"><a class="header" href="#the-grpc-field">The <code>grpc</code> field</a></h4>
+<p>When <code>true</code>, Buffy invokes <code>protoc-gen-go-grpc</code> in addition to
+<code>protoc-gen-go</code>, generating service stubs alongside the message types. When
+omitted or <code>false</code>, only message types are generated.</p>
+<pre><code class="language-toml">grpc = true
+</code></pre>
+<p>Default: <code>false</code>.</p>
+<h4 id="the-keep-field"><a class="header" href="#the-keep-field">The <code>keep</code> field</a></h4>
+<p>A list of file paths (relative to the repository root) that Buffy fetches
+from the remote before committing. Useful for human-maintained files like
+<code>README.md</code> that should outlive the regenerated content.</p>
+<pre><code class="language-toml">keep = ["README.md", "docs/usage.md"]
+</code></pre>
+<p>If a listed file does not yet exist on the remote, Buffy logs a notice and
+skips it instead of failing.</p>
+<p>Default: <code>[]</code> (no files preserved).</p>
+<h3 id="example-consumer-usage"><a class="header" href="#example-consumer-usage">Example consumer usage</a></h3>
+<pre><code class="language-sh">go get github.com/example/tomato-go@v0.1.0
+</code></pre>
+<pre><code class="language-go">import (
+    pb "github.com/example/tomato-go/greeter"
+)
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="java"><a class="header" href="#java">Java</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="kotlin"><a class="header" href="#kotlin">Kotlin</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rust"><a class="header" href="#rust">Rust</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="javascript"><a class="header" href="#javascript">JavaScript</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="typescript"><a class="header" href="#typescript">TypeScript</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command-Line Interface</a></h1>
 
                     </main>
 

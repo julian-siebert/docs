@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-89b539c2.js";
+            window.path_to_searchindex_js = "../searchindex-d5f32c5b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09aa5db1.js"></script>
+        <script src="../toc-548557f9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,24 +183,149 @@
                         <h1 id="the-manifest-format"><a class="header" href="#the-manifest-format">The Manifest Format</a></h1>
 <p>The <code>Buffy.toml</code> file for each package is called its <em>manifest</em>. It is written
 in the [TOML] format. It contains metadata that is needed to compile and publish
-the protocol buffers to all supported language’s targets.</p>
+the protocol buffers to all supported language targets.</p>
 <p>Every manifest file consists of the following sections:</p>
 <ul>
-<li><a href="#the-package-section"><code>[package]</code></a> — Defines a package.</li>
+<li><a href="#the-package-section"><code>[package]</code></a> — Defines a package.
+<ul>
+<li><a href="#the-name-field"><code>name</code></a> — The name of the package.</li>
+<li><a href="#the-version-field"><code>version</code></a> — The version of the package.</li>
+<li><a href="#the-description-field"><code>description</code></a> — A description of the package.</li>
+<li><a href="#the-license-field"><code>license</code></a> — The package license.</li>
+<li><a href="#the-homepage-field"><code>homepage</code></a> — URL of the package homepage.</li>
+<li><a href="#the-authors-field"><code>authors</code></a> — The authors of the package.</li>
 </ul>
+</li>
+<li><a href="#the-source-section"><code>[source]</code></a> — Configures where <code>.proto</code> files live.
+<ul>
+<li><a href="#the-path-field"><code>path</code></a> — Path to the directory containing <code>.proto</code> files.</li>
+</ul>
+</li>
+</ul>
+<p>Profile configuration (the per-language publishing targets in <code>.buffy/</code>) is
+documented separately in <a href="profiles.html">the profiles chapter</a>.</p>
 <h2 id="the-package-section"><a class="header" href="#the-package-section">The <code>[package]</code> section</a></h2>
 <p>The first section in a <code>Buffy.toml</code> is <code>[package]</code>.</p>
 <pre><code class="language-toml">[package]
-name = "tomato" # the name of the package
+name = "tomato"   # the name of the package
 version = "0.1.0" # the current version, obeying semver
 </code></pre>
+<p>All fields in this section are required. The metadata defined here is embedded
+in every published artifact across all language targets (e.g., it ends up in
+<code>Cargo.toml</code>, the Maven POM, <code>package.json</code>, and the AUTHORS/LICENSE files of
+generated Go modules).</p>
 <h3 id="the-name-field"><a class="header" href="#the-name-field">The <code>name</code> field</a></h3>
-<p>The package name is an identifier used to refer to the package.</p>
-<p>The name must use only [alphanumeric] characters or <code>-</code> or <code>_</code>, and cannot be empty.</p>
+<p>The package name is an identifier used to refer to the package. It serves as
+the default base name for language-specific artifacts (Cargo crate name, Maven
+<code>artifactId</code>, npm package name, etc.). Profiles may override the name per
+language.</p>
+<p>The name must use only <a href="https://doc.rust-lang.org/std/primitive.char.html#method.is_alphanumeric">alphanumeric</a> characters or <code>-</code> or <code>_</code>, and cannot be
+empty.</p>
 <ul>
 <li>Only ASCII characters are allowed.</li>
 <li>Use a maximum of 32 characters of length.</li>
 </ul>
+<pre><code class="language-toml">[package]
+name = "tomato"
+</code></pre>
+<h3 id="the-version-field"><a class="header" href="#the-version-field">The <code>version</code> field</a></h3>
+<p>The <code>version</code> field is formatted according to the <a href="https://semver.org">SemVer</a> specification:</p>
+<p>Versions must have three numeric parts: the major version, the minor version,
+and the patch version.</p>
+<p>A pre-release part can be added after a dash such as <code>1.0.0-alpha</code>. The
+pre-release part may be separated with periods to distinguish separate
+components. Numeric components will use numeric comparison while everything
+else will be compared lexicographically. For example, <code>1.0.0-alpha.11</code> is
+higher than <code>1.0.0-alpha.4</code>.</p>
+<p>A metadata part can be added after a plus, such as <code>1.0.0+21AF26D3</code>. This is
+for informational purposes only and is generally ignored.</p>
+<pre><code class="language-toml">[package]
+# ...
+version = "0.1.0"
+</code></pre>
+<p>The version applies to all language targets when publishing. To override the
+version for a single run (e.g., in CI where it is derived from a Git tag), use
+the <code>--publish-version</code> flag:</p>
+<pre><code class="language-sh">buffy --publish --publish-version 1.2.3
+</code></pre>
+<h3 id="the-description-field"><a class="header" href="#the-description-field">The <code>description</code> field</a></h3>
+<p>The description is a short blurb about the package. Registries that display it
+(such as crates.io for the Rust target or npmjs.com for the JavaScript and
+TypeScript targets) will show this text on the package page. This should be
+plain text (not Markdown).</p>
+<pre><code class="language-toml">[package]
+# ...
+description = "Tomato protocol buffers for the salad service"
+</code></pre>
+<h3 id="the-license-field"><a class="header" href="#the-license-field">The <code>license</code> field</a></h3>
+<p>The <code>license</code> field contains the SPDX expression of the software license that
+the package is released under.</p>
+<p>The value is interpreted as an <a href="https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/">SPDX 2.3 license expression</a>. The name must be
+a known license from the <a href="https://spdx.org/licenses/">SPDX license list</a>. SPDX expressions support <code>AND</code>
+and <code>OR</code> operators to combine multiple licenses.</p>
+<pre><code class="language-toml">[package]
+# ...
+license = "MIT OR Apache-2.0"
+</code></pre>
+<p>Using <code>OR</code> indicates the user may choose either license. Using <code>AND</code> indicates
+the user must comply with both licenses simultaneously. Some examples:</p>
+<ul>
+<li><code>MIT</code></li>
+<li><code>MIT OR Apache-2.0</code></li>
+<li><code>LGPL-2.1-only AND MIT AND BSD-2-Clause</code></li>
+</ul>
+<p>When the manifest declares multiple licenses, Buffy generates one
+<code>LICENSE-&lt;id&gt;</code> file per license plus an index <code>LICENSE</code> file describing the
+combination. With a single license, a single <code>LICENSE</code> file is generated. The
+full license text is embedded from the SPDX database.</p>
+<p>Custom <code>LicenseRef-*</code> identifiers are not supported.</p>
+<h3 id="the-homepage-field"><a class="header" href="#the-homepage-field">The <code>homepage</code> field</a></h3>
+<p>The <code>homepage</code> field should be a URL to a site that is the home page for your
+package.</p>
+<pre><code class="language-toml">[package]
+# ...
+homepage = "https://github.com/example/tomato"
+</code></pre>
+<p>The homepage URL is surfaced in language-specific metadata fields where
+applicable: <code>homepage</code> in <code>Cargo.toml</code>, <code>&lt;url&gt;</code> in the Maven POM, <code>homepage</code> in
+<code>package.json</code>.</p>
+<h3 id="the-authors-field"><a class="header" href="#the-authors-field">The <code>authors</code> field</a></h3>
+<p>The <code>authors</code> field lists the people or organizations that are considered the
+authors of the package. An optional email address may be included within
+angled brackets at the end of each author entry.</p>
+<pre><code class="language-toml">[package]
+# ...
+authors = [
+    "Jane Doe &lt;jane@example.com&gt;",
+    "John Smith",
+    "Acme Corp &lt;opensource@acme.com&gt;",
+]
+</code></pre>
+<p>Each entry is parsed into a name and an optional email. Both are then forwarded
+to language-specific metadata: <code>&lt;developer&gt;</code> entries in the Maven POM, the
+<code>author</code> field in <code>package.json</code>, the <code>authors</code> array in <code>Cargo.toml</code>, and an
+<code>AUTHORS</code> file in generated Go modules.</p>
+<p>If an entry is malformed (e.g., empty, or containing brackets without an
+email), Buffy reports a diagnostic pointing at the offending entry.</p>
+<h2 id="the-source-section"><a class="header" href="#the-source-section">The <code>[source]</code> section</a></h2>
+<p>The <code>[source]</code> section tells Buffy where to find the <code>.proto</code> files for code
+generation.</p>
+<pre><code class="language-toml">[source]
+path = "proto"
+</code></pre>
+<p>If the section is omitted, the default is used:</p>
+<pre><code class="language-toml">[source]
+path = "src"
+</code></pre>
+<h3 id="the-path-field"><a class="header" href="#the-path-field">The <code>path</code> field</a></h3>
+<p>The relative path (from <code>Buffy.toml</code>) to the directory containing <code>.proto</code>
+files. Buffy walks this directory recursively and passes every <code>.proto</code> file
+it finds to <code>protoc</code>.</p>
+<p>The path is also used as <code>--proto_path</code> when invoking <code>protoc</code>, so imports
+between <code>.proto</code> files should be relative to this root.</p>
+<pre><code class="language-toml">[source]
+path = "proto"
+</code></pre>
 
                     </main>
 
@@ -210,6 +335,9 @@ version = "0.1.0" # the current version, obeying semver
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="../reference/profiles.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -221,6 +349,9 @@ version = "0.1.0" # the current version, obeying semver
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="../reference/profiles.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>

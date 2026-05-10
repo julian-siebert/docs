@@ -35,10 +35,10 @@
             const path_to_root = "../../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "../../searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-548557f9.js"></script>
+        <script src="../../toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,7 +180,164 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="rust"><a class="header" href="#rust">Rust</a></h1>
+                        <h1 id="rust-profiles"><a class="header" href="#rust-profiles">Rust Profiles</a></h1>
+<p>The <code>rust</code> profile generates a Cargo crate from your <code>.proto</code> files using
+<a href="https://github.com/tokio-rs/prost"><code>prost</code></a> and (optionally) <a href="https://github.com/hyperium/tonic"><code>tonic</code></a> for gRPC. The crate is published either
+to <a href="https://crates.io/">crates.io</a> (or any Cargo-compatible registry) or to a Git repository.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-crate-variant"><code>crate</code></a> — Publish to a Cargo registry.</li>
+<li><a href="#the-git-variant"><code>git</code></a> — Push the generated crate to a Git remote.</li>
+</ul>
+<h2 id="required-tools"><a class="header" href="#required-tools">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>protoc-gen-prost</code> — Rust message generator.</li>
+<li><code>protoc-gen-prost-crate</code> — Crate-layout generator.</li>
+<li><code>protoc-gen-tonic</code> — gRPC plugin (only when <code>grpc = true</code>).</li>
+<li><code>cargo</code> — Rust toolchain, used for <code>cargo build</code> and <code>cargo publish</code>.</li>
+<li><code>git</code> — Required only for the <code>git</code> variant.</li>
+</ul>
+<p>The <code>protoc-gen-*</code> plugins are installed via Cargo:</p>
+<pre><code class="language-sh">cargo install protoc-gen-prost protoc-gen-prost-crate protoc-gen-tonic
+</code></pre>
+<h2 id="the-crate-variant"><a class="header" href="#the-crate-variant">The <code>crate</code> variant</a></h2>
+<p>Generates a Cargo crate under <code>target/&lt;profile&gt;/</code>, runs <code>cargo build</code> to
+verify, then runs <code>cargo publish</code> against the configured registry.</p>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-toml"># .buffy/rust-example.toml
+[rust.crate]
+name = "tomato"
+edition = "2021"
+repository = "https://github.com/example/tomato"
+documentation = "https://docs.rs/tomato"
+registry = "crates-io"
+grpc = true
+</code></pre>
+<h3 id="fields"><a class="header" href="#fields">Fields</a></h3>
+<ul>
+<li><a href="#the-name-field"><code>name</code></a> — Crate name as it appears in <code>Cargo.toml</code>.</li>
+<li><a href="#the-edition-field"><code>edition</code></a> — Rust edition.</li>
+<li><a href="#the-repository-field"><code>repository</code></a> — Repository URL embedded in the crate.</li>
+<li><a href="#the-documentation-field"><code>documentation</code></a> — Documentation URL.</li>
+<li><a href="#the-registry-field"><code>registry</code></a> — Cargo registry name.</li>
+<li><a href="#the-prost_version-field"><code>prost_version</code></a> — Pin <code>prost</code> runtime.</li>
+<li><a href="#the-tonic_version-field"><code>tonic_version</code></a> — Pin <code>tonic</code> runtime.</li>
+<li><a href="#the-grpc-field"><code>grpc</code></a> — Generate gRPC service stubs.</li>
+</ul>
+<h4 id="the-name-field"><a class="header" href="#the-name-field">The <code>name</code> field</a></h4>
+<p>The crate name as it will appear in <code>Cargo.toml</code> and on the registry. Must
+follow Cargo naming rules (lowercase, hyphens permitted).</p>
+<pre><code class="language-toml">name = "tomato"
+</code></pre>
+<p>The library name (i.e. the Rust module name) is derived by replacing
+hyphens with underscores: <code>tomato-rs</code> becomes <code>tomato_rs</code>.</p>
+<h4 id="the-edition-field"><a class="header" href="#the-edition-field">The <code>edition</code> field</a></h4>
+<p>The Rust edition for the generated crate.</p>
+<pre><code class="language-toml">edition = "2021"
+</code></pre>
+<p>Common values: <code>"2021"</code>, <code>"2024"</code>. The edition is written verbatim to the
+generated <code>Cargo.toml</code>.</p>
+<h4 id="the-repository-field"><a class="header" href="#the-repository-field">The <code>repository</code> field</a></h4>
+<p>A URL to the source repository. Embedded in the crate’s <code>Cargo.toml</code> as the
+<code>repository</code> field.</p>
+<pre><code class="language-toml">repository = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-documentation-field"><a class="header" href="#the-documentation-field">The <code>documentation</code> field</a></h4>
+<p>A URL to the crate’s documentation page.</p>
+<pre><code class="language-toml">documentation = "https://docs.rs/tomato"
+</code></pre>
+<h4 id="the-registry-field"><a class="header" href="#the-registry-field">The <code>registry</code> field</a></h4>
+<p>The name of the Cargo registry to publish to. The special value
+<code>"crates-io"</code> targets <a href="https://crates.io/">crates.io</a> directly. Any other value must correspond
+to a registry configured in the user’s <code>~/.cargo/config.toml</code>:</p>
+<pre><code class="language-toml"># ~/.cargo/config.toml
+[registries]
+my-registry = { index = "sparse+https://my-kellnr.example.com/api/v1/crates/" }
+</code></pre>
+<pre><code class="language-toml"># .buffy/rust.toml
+registry = "my-registry"
+</code></pre>
+<p>Default: <code>"crates-io"</code>.</p>
+<h4 id="the-prost_version-field"><a class="header" href="#the-prost_version-field">The <code>prost_version</code> field</a></h4>
+<p>Optional. Pin the <code>prost</code> runtime version. If omitted, Buffy queries
+crates.io for the latest release.</p>
+<pre><code class="language-toml">prost_version = "0.13"
+</code></pre>
+<h4 id="the-tonic_version-field"><a class="header" href="#the-tonic_version-field">The <code>tonic_version</code> field</a></h4>
+<p>Optional. Pin the <code>tonic</code> runtime version (and <code>tonic-prost</code> for tonic 0.13+).
+Only used when <code>grpc = true</code>. If omitted, Buffy queries crates.io for the
+latest release.</p>
+<pre><code class="language-toml">tonic_version = "0.13"
+</code></pre>
+<h4 id="the-grpc-field"><a class="header" href="#the-grpc-field">The <code>grpc</code> field</a></h4>
+<p>When <code>true</code>, Buffy invokes <code>protoc-gen-tonic</code> and includes <code>tonic</code> and
+<code>tonic-prost</code> in the crate’s dependencies.</p>
+<pre><code class="language-toml">grpc = true
+</code></pre>
+<p>Default: <code>false</code>.</p>
+<h3 id="required-environment-variables"><a class="header" href="#required-environment-variables">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>CARGO_REGISTRY_TOKEN</code></td><td>Token for the configured registry (publish auth)</td></tr>
+</tbody>
+</table>
+</div>
+<p>For non-<code>crates-io</code> registries, the index URL must be configured in
+<code>~/.cargo/config.toml</code> as shown above.</p>
+<h3 id="example-consumer-usage"><a class="header" href="#example-consumer-usage">Example consumer usage</a></h3>
+<pre><code class="language-sh">cargo add tomato
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tomato::greeter::HelloRequest;
+
+let req = HelloRequest { name: "World".into() };
+println!("{}", req.name);
+<span class="boring">}</span></code></pre>
+<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<p>Generates the same crate as <code>crate</code>, but commits and tags it to a Git
+repository instead of uploading to a registry. Useful when you want to
+distribute internally without setting up a registry, or to give consumers
+a reproducible Git pin.</p>
+<h3 id="example-1"><a class="header" href="#example-1">Example</a></h3>
+<pre><code class="language-toml"># .buffy/rust.toml
+[rust.git]
+name = "tomato"
+edition = "2021"
+remote = "git@github.com:example/tomato-rs.git"
+branch = "main"
+repository = "https://github.com/example/tomato-rs"
+documentation = "https://github.com/example/tomato-rs"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="fields-1"><a class="header" href="#fields-1">Fields</a></h3>
+<p>The same fields as <code>crate</code> (except <code>registry</code>, which doesn’t apply), plus:</p>
+<ul>
+<li><a href="#the-remote-field"><code>remote</code></a> — Git URL the crate is pushed to.</li>
+<li><a href="#the-branch-field"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<h4 id="the-remote-field"><a class="header" href="#the-remote-field">The <code>remote</code> field</a></h4>
+<pre><code class="language-toml">remote = "git@github.com:example/tomato-rs.git"
+</code></pre>
+<h4 id="the-branch-field"><a class="header" href="#the-branch-field">The <code>branch</code> field</a></h4>
+<pre><code class="language-toml">branch = "main"
+</code></pre>
+<h4 id="the-keep-field"><a class="header" href="#the-keep-field">The <code>keep</code> field</a></h4>
+<pre><code class="language-toml">keep = ["README.md"]
+</code></pre>
+<p>Default: <code>[]</code>.</p>
+<h3 id="example-consumer-usage-1"><a class="header" href="#example-consumer-usage-1">Example consumer usage</a></h3>
+<pre><code class="language-toml"># in the consumer's Cargo.toml
+[dependencies]
+tomato = { git = "https://github.com/example/tomato-rs", tag = "v0.1.0" }
+</code></pre>
 
                     </main>
 

@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "../searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-548557f9.js"></script>
+        <script src="../toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,6 +181,121 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h1>
+<p>Buffy reads credentials and a few configuration values from environment
+variables rather than from <code>Buffy.toml</code> or the profile files. This keeps
+secrets out of source control and matches the conventions of the underlying
+tooling (Cargo, Maven, npm).</p>
+<p>For local development, Buffy auto-loads a <code>.env</code> file from the current
+directory via <a href="https://crates.io/crates/dotenvy"><code>dotenvy</code></a>. For CI, set the variables through your provider’s
+secret store (GitHub Actions secrets, GitLab CI variables, etc.).</p>
+<h2 id="quoting-in-env-files"><a class="header" href="#quoting-in-env-files">Quoting in <code>.env</code> files</a></h2>
+<p><code>dotenvy</code> follows shell-like rules. Values containing <code>$</code>, <code>#</code>, whitespace, or
+other special characters should be wrapped in <strong>single quotes</strong> to disable
+variable expansion and escaping:</p>
+<pre><code class="language-env">GPG_PASSPHRASE='HD$qOdHYiG#jGUCpNJhzSSx5W'
+NPM_TOKEN='npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre>
+<p>Double-quoted values allow <code>$VAR</code> expansion, which can silently corrupt
+secrets that contain a <code>$</code>.</p>
+<h2 id="variables-by-language"><a class="header" href="#variables-by-language">Variables by language</a></h2>
+<h3 id="java-and-kotlin"><a class="header" href="#java-and-kotlin">Java and Kotlin</a></h3>
+<p>Used by the <code>maven_central</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MAVEN_USERNAME</code></td><td>yes</td><td>Sonatype Central Portal username token</td></tr>
+<tr><td><code>MAVEN_PASSWORD</code></td><td>yes</td><td>Sonatype Central Portal password token</td></tr>
+<tr><td><code>GPG_KEY_ID</code></td><td>yes</td><td>GPG key ID used for signing artifacts</td></tr>
+<tr><td><code>GPG_PASSPHRASE</code></td><td>optional</td><td>Passphrase for the GPG key (omit if the key has no passphrase)</td></tr>
+<tr><td><code>GPG_PRIVATE_KEY</code></td><td>optional</td><td>Armored private key, imported on each run (intended for CI)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The <code>MAVEN_USERNAME</code> / <code>MAVEN_PASSWORD</code> pair is generated as a token from your
+account at <a href="https://central.sonatype.com">central.sonatype.com</a> under
+<strong>Profile → User Token</strong>.</p>
+<p><code>GPG_PRIVATE_KEY</code> is intended for CI runners that don’t have a persistent
+keyring. When set, Buffy writes the key to a temporary file, runs
+<code>gpg --import</code>, and removes the file. Do <strong>not</strong> set this on machines that
+already have the key in their local keyring.</p>
+<h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
+<p>Used by the <code>crate</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>CARGO_REGISTRY_TOKEN</code></td><td>yes</td><td>API token for the configured Cargo registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>For <a href="https://crates.io/">crates.io</a>, generate the token under <strong>Account → API Tokens</strong>. For
+self-hosted registries (e.g. <a href="https://kellnr.io/">Kellnr</a>), use the token-issuing mechanism of the
+registry. The registry index URL must additionally be configured in
+<code>~/.cargo/config.toml</code>:</p>
+<pre><code class="language-toml">[registries]
+my-registry = { index = "sparse+https://my-kellnr.example.com/api/v1/crates/" }
+</code></pre>
+<h3 id="javascript-and-typescript"><a class="header" href="#javascript-and-typescript">JavaScript and TypeScript</a></h3>
+<p>Used by the <code>npm</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NPM_TOKEN</code></td><td>yes</td><td>Auth token for the configured registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>For the public npm registry, generate the token via <code>npm token create</code> or in
+the npmjs.com web UI. For other registries (Verdaccio, GitHub Packages, etc.),
+use the registry’s token-issuing mechanism.</p>
+<p>Buffy writes a temporary <code>.npmrc</code> to the build directory containing the token
+and the configured registry URL, then removes it after publishing. Existing
+<code>.npmrc</code> files in your home directory are not used.</p>
+<h3 id="golang"><a class="header" href="#golang">Golang</a></h3>
+<p>The <code>golang</code> profile only supports a <code>git</code> variant, which uses Git itself for
+authentication. Configure your SSH agent or HTTPS credentials via Git as
+usual; Buffy does not read any environment variables for this profile.</p>
+<h2 id="variables-by-use-case"><a class="header" href="#variables-by-use-case">Variables by use case</a></h2>
+<h3 id="local-development"><a class="header" href="#local-development">Local development</a></h3>
+<p>The minimal <code>.env</code> to publish from a developer machine across all targets:</p>
+<pre><code class="language-env"># Java / Kotlin (Maven Central)
+MAVEN_USERNAME='your-sonatype-username'
+MAVEN_PASSWORD='your-sonatype-token'
+GPG_KEY_ID='YOURGPGKEYID0123456789ABCDEF'
+GPG_PASSPHRASE='your-gpg-passphrase'
+
+# Rust (crates.io or other Cargo registry)
+CARGO_REGISTRY_TOKEN='your-cargo-token'
+
+# JavaScript / TypeScript (npm)
+NPM_TOKEN='your-npm-token'
+</code></pre>
+<p>For Git-only profiles, no environment variables are required — Git uses your
+SSH agent.</p>
+<h3 id="ci"><a class="header" href="#ci">CI</a></h3>
+<p>In CI, additionally set <code>GPG_PRIVATE_KEY</code> so that the runner can import the
+signing key on each run:</p>
+<pre><code class="language-env">GPG_PRIVATE_KEY='-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----'
+</code></pre>
+<p>CI secret stores typically support multiline values directly. If yours does
+not, base64-encode the key and decode it in your pipeline before exposing it
+as <code>GPG_PRIVATE_KEY</code>.</p>
+<h2 id="behavior"><a class="header" href="#behavior">Behavior</a></h2>
+<p>When a required variable is missing or set to an empty string, Buffy emits a
+diagnostic identifying the variable, the profile that requires it, and a
+short hint on how to obtain it. The build does not proceed past this point.</p>
+<p>Variables are only consulted at the moment they are needed. For instance,
+<code>buffy check</code> does not require any of these to be set, since it does not
+publish anything.</p>
 
                     </main>
 

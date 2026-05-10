@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-548557f9.js"></script>
+        <script src="toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,7 +180,141 @@
                     <main>
                         <h1 id="the-buffy-book"><a class="header" href="#the-buffy-book">The Buffy Book</a></h1>
 <img src="images/buffy.png" alt="Buffy Logo" width="240">
-<p>Buffy is… under construction :)</p>
+<p>Buffy is a <a href="https://protobuf.dev/" title="&quot;Protocol Buffers&quot;"><em>Protocol Buffers</em></a> build and publishing tool. From a
+single set of <code>.proto</code> files, Buffy generates idiomatic libraries for multiple
+languages, packages each one according to its ecosystem’s conventions, and
+publishes them to their respective registries (e.g. crates.io, Maven Central, npm)
+or to Git. You can contribute to this book on <a href="https://github.com/julian-siebert/buffy">GitHub</a>.</p>
+<h2 id="sections"><a class="header" href="#sections">Sections</a></h2>
+<p><strong><a href="#getting-started">Getting Started</a></strong></p>
+<p>Install Buffy and set up your first project that generates protocol buffer
+libraries for multiple languages.</p>
+<p><strong><a href="#buffy-reference">Buffy Reference</a></strong></p>
+<p>The reference covers the details of every area of Buffy: the manifest format,
+profile configuration per language, environment variables, and the command-line
+interface.</p>
+<p><strong><a href="#frequently-asked-questions">Frequently Asked Questions</a></strong></p>
+<p><strong>Appendices:</strong></p>
+<ul>
+<li><a href="#glossary">Glossary</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>To get started with Buffy, install it and set up your first project that
+generates protocol buffer libraries for multiple languages.</p>
+<ul>
+<li><a href="#installation">Installation</a> — Install Buffy on your system.</li>
+<li><a href="#first-steps-with-buffy">First Steps with Buffy</a> — Create a project and generate
+your first multi-language libraries.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>Buffy is distributed as a single binary. Install it with:</p>
+<pre><code class="language-sh">curl -sSL https://pkgs.julian-siebert.de/buffy/install.sh | sh
+</code></pre>
+<p>The installer places the <code>buffy</code> binary in <code>~/.local/bin/buffy</code> and prints
+instructions if that directory is not already on your <code>PATH</code>.</p>
+<p>Verify the installation:</p>
+<pre><code class="language-sh">buffy --version
+</code></pre>
+<h2 id="external-tools"><a class="header" href="#external-tools">External tools</a></h2>
+<p>Buffy generates code by invoking language-specific tools. You only need the
+tools for the languages you actually target — Buffy reports a clear diagnostic
+if a tool is missing when you build.</p>
+<p>A complete list per language is documented in each profile chapter under the
+<a href="#profiles-format">Buffy Reference</a>. The most common tools:</p>
+<ul>
+<li><code>protoc</code> — The Protocol Buffers compiler. Required by every language.</li>
+<li><code>git</code> — Required by every <code>git</code> profile variant and by Go modules.</li>
+<li>Per language: <code>go</code>, <code>cargo</code>, <code>mvn</code>, <code>npm</code>, plus their respective protobuf
+plugins.</li>
+</ul>
+<p>To verify the toolchain for a project after configuring it, run:</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<h2 id="updating"><a class="header" href="#updating">Updating</a></h2>
+<p>Re-running the installer updates Buffy to the latest version:</p>
+<pre><code class="language-sh">curl -sSL https://pkgs.julian-siebert.de/buffy/install.sh | sh
+</code></pre>
+<h2 id="uninstalling"><a class="header" href="#uninstalling">Uninstalling</a></h2>
+<p>Remove the binary:</p>
+<pre><code class="language-sh">rm ~/.local/bin/buffy
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="first-steps-with-buffy"><a class="header" href="#first-steps-with-buffy">First Steps with Buffy</a></h1>
+<p>This walkthrough creates a small Buffy project, defines a <code>.proto</code> schema, and
+generates libraries for two languages — Go and Rust — using the <code>git</code> variant
+so no registry accounts are needed.</p>
+<h2 id="create-a-project"><a class="header" href="#create-a-project">Create a project</a></h2>
+<p>Create a directory for your project and add the standard layout:</p>
+<pre><code class="language-sh">mkdir tomato &amp;&amp; cd tomato
+mkdir proto .buffy
+</code></pre>
+<h2 id="define-the-manifest"><a class="header" href="#define-the-manifest">Define the manifest</a></h2>
+<p>Create a <code>Buffy.toml</code> at the project root:</p>
+<pre><code class="language-toml">[package]
+name = "tomato"
+description = "Tomato protocol buffers"
+version = "0.1.0"
+license = "MIT"
+homepage = "https://github.com/example/tomato"
+authors = ["Jane Doe &lt;jane@example.com&gt;"]
+
+[source]
+path = "proto"
+</code></pre>
+<p>See <a href="#the-manifest-format">The Manifest Format</a> for all available fields.</p>
+<h2 id="add-a-proto-file"><a class="header" href="#add-a-proto-file">Add a <code>.proto</code> file</a></h2>
+<p>Create <code>proto/greeter.proto</code>:</p>
+<pre><code class="language-proto">syntax = "proto3";
+
+package greeter;
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
+</code></pre>
+<h2 id="configure-profiles"><a class="header" href="#configure-profiles">Configure profiles</a></h2>
+<p>Create one profile file per language target.</p>
+<p><code>.buffy/golang.toml</code>:</p>
+<pre><code class="language-toml">[golang.git]
+module = "github.com/example/tomato-go"
+remote = "git@github.com:example/tomato-go.git"
+branch = "main"
+grpc = true
+</code></pre>
+<p><code>.buffy/rust.toml</code>:</p>
+<pre><code class="language-toml">[rust.git]
+name = "tomato"
+edition = "2021"
+remote = "git@github.com:example/tomato-rs.git"
+branch = "main"
+repository = "https://github.com/example/tomato-rs"
+documentation = "https://github.com/example/tomato-rs"
+grpc = true
+</code></pre>
+<p>The filename (e.g., <code>golang.toml</code>) becomes the <em>profile name</em> and shows up in
+build output. See <a href="#profiles-format">Profiles Format</a> for the full
+list of options per language.</p>
+<h2 id="verify-the-toolchain"><a class="header" href="#verify-the-toolchain">Verify the toolchain</a></h2>
+<p>Before building, check that all required tools are installed:</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<p>If anything is missing, Buffy prints an installation hint specific to your
+platform.</p>
+<h2 id="build"><a class="header" href="#build">Build</a></h2>
+<p>Run Buffy without arguments to build every profile in parallel:</p>
+<pre><code class="language-sh">buffy
+</code></pre>
+<p>Each profile produces a complete, self-contained package under <code>target/</code>:</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="buffy-reference"><a class="header" href="#buffy-reference">Buffy Reference</a></h1>
 <p>The reference covers the details of various areas of Buffy.</p>
@@ -189,14 +323,14 @@
 <li><a href="#profiles-format">Profiles Format</a> — Per-language target configuration in <code>.buffy/</code>.
 <ul>
 <li><a href="#golang-profiles">Golang</a> — Publish Go modules via Git.</li>
-<li><a href="#java">Java</a> — Publish to Maven Central or via Git.</li>
-<li><a href="#kotlin">Kotlin</a> — Publish to Maven Central or via Git.</li>
-<li><a href="#rust">Rust</a> — Publish to crates.io or via Git.</li>
-<li><a href="#javascript">JavaScript</a> — Publish to npm or via Git.</li>
-<li><a href="#typescript">TypeScript</a> — Publish to npm or via Git.</li>
+<li><a href="#java-profiles">Java</a> — Publish to Maven Central or via Git.</li>
+<li><a href="#kotlin-profiles">Kotlin</a> — Publish to Maven Central or via Git.</li>
+<li><a href="#rust-profiles">Rust</a> — Publish to crates.io or via Git.</li>
+<li><a href="#javascript-profiles">JavaScript</a> — Publish to npm or via Git.</li>
+<li><a href="#typescript-profiles">TypeScript</a> — Publish to npm or via Git.</li>
 </ul>
 </li>
-<li><a href="#environment-variables">Environment Variables</a> — Credentials and configuration via environment.</li>
+<li><a href="#environment-variables-1">Environment Variables</a> — Credentials and configuration via environment.</li>
 <li><a href="#command-line-interface">Command-Line Interface</a> — The <code>buffy</code> CLI.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
@@ -348,6 +482,114 @@ path = "proto"
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="profiles-format"><a class="header" href="#profiles-format">Profiles Format</a></h1>
+<p>Profiles configure language-specific publishing targets. They live in the
+<code>.buffy/</code> directory next to <code>Buffy.toml</code>, with one TOML file per profile.</p>
+<pre><code>my-project/
+├── Buffy.toml
+├── proto/
+│   └── greeter.proto
+└── .buffy/
+    ├── golang-github.toml
+    ├── java.toml
+    ├── kotlin.toml
+    ├── rust-crates-io.toml
+    ├── js.toml
+    └── typescript.toml
+</code></pre>
+<p>The filename (without <code>.toml</code>) becomes the <em>profile name</em>. The profile name
+is used as the directory under <code>target/</code> where build artifacts are written
+(e.g., <code>target/golang-github/</code>, <code>target/rust-crates-io/</code>) and as the prefix in progress
+output.</p>
+<h2 id="profile-naming"><a class="header" href="#profile-naming">Profile naming</a></h2>
+<p>Profile names must be unique within a project. Buffy reports an error if two
+files in <code>.buffy/</code> resolve to the same name (e.g., on case-insensitive
+filesystems where <code>Rust.toml</code> and <code>rust.toml</code> collide).</p>
+<p>The filename has no relationship to the <em>language</em> the profile configures —
+the language is selected by the table syntax inside the file. A profile
+called <code>internal-go.toml</code> can configure a <code>golang</code> target, and a project may
+contain multiple profiles for the same language under different names (for
+example, one for an internal Git remote and another for a public registry).</p>
+<h2 id="file-structure"><a class="header" href="#file-structure">File structure</a></h2>
+<p>Each profile file selects exactly one language and exactly one publishing
+variant, using nested-table syntax:</p>
+<pre><code class="language-toml">[&lt;language&gt;.&lt;variant&gt;]
+# fields specific to the language and variant
+</code></pre>
+<p>For example, a Rust profile that publishes to crates.io:</p>
+<pre><code class="language-toml">[rust.crate]
+name = "tomato"
+edition = "2021"
+repository = "https://github.com/example/tomato"
+documentation = "https://docs.rs/tomato"
+registry = "crates-io"
+grpc = true
+</code></pre>
+<p>A Go profile that publishes via Git:</p>
+<pre><code class="language-toml">[golang.git]
+module = "github.com/example/tomato-go"
+remote = "git@github.com:example/tomato-go.git"
+branch = "main"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<p>A profile file must contain exactly one <code>[&lt;language&gt;.&lt;variant&gt;]</code> table.
+Multiple variants in the same file are not supported; use multiple profile
+files instead.</p>
+<h2 id="available-languages-and-variants"><a class="header" href="#available-languages-and-variants">Available languages and variants</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Language</th><th>Variants</th><th>Default destination</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="#golang-profiles"><code>golang</code></a></td><td><code>git</code></td><td>A Git remote (Go modules use Git tags)</td></tr>
+<tr><td><a href="#java-profiles"><code>java</code></a></td><td><code>maven_central</code>, <code>git</code></td><td>Sonatype Central Portal</td></tr>
+<tr><td><a href="#kotlin-profiles"><code>kotlin</code></a></td><td><code>maven_central</code>, <code>git</code></td><td>Sonatype Central Portal</td></tr>
+<tr><td><a href="#rust-profiles"><code>rust</code></a></td><td><code>crate</code>, <code>git</code></td><td>crates.io or another Cargo registry</td></tr>
+<tr><td><a href="#javascript-profiles"><code>javascript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
+<tr><td><a href="#typescript-profiles"><code>typescript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each language is documented in its own chapter, with the full list of fields
+per variant.</p>
+<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<p>Every language supports a <code>git</code> variant. Instead of publishing to a registry,
+Buffy commits the generated artifact to a Git repository and tags the commit
+with <code>v&lt;version&gt;</code>. Consumers depend on the package by its Git URL.</p>
+<p>Common fields across all <code>git</code> variants:</p>
+<ul>
+<li><code>remote</code> — The Git URL the artifact is pushed to. SSH URLs are
+recommended; Buffy disables Git’s terminal prompt during operations, so
+HTTPS URLs work only if credentials are pre-cached.</li>
+<li><code>branch</code> — The branch to push to. The previous content is replaced
+(force-push), with the exception of files listed in <code>keep</code>.</li>
+<li><code>keep</code> — A list of paths to fetch from the remote before committing,
+preserving them across publishes. Useful for human-maintained files such
+as <code>README.md</code> that should not be overwritten by code generation.</li>
+</ul>
+<p>The exact list of fields varies by language because the build artifact
+itself is language-specific (a <code>Cargo.toml</code>, a Maven POM, a <code>package.json</code>,
+etc.) and those fields are part of the profile.</p>
+<h2 id="build-output"><a class="header" href="#build-output">Build output</a></h2>
+<p>Each profile is built into its own directory under <code>target/</code>:</p>
+<pre><code>target/
+├── golang/        # output of the `golang.toml` profile
+├── java/          # output of the `java.toml` profile
+└── ...
+</code></pre>
+<p>The directory is cleared at the start of each build, so all generated content
+reflects the current run. Buffy automatically adds <code>target/</code> to a <code>.gitignore</code>
+at the repository root.</p>
+<h2 id="parallelism"><a class="header" href="#parallelism">Parallelism</a></h2>
+<p>All profiles are built in parallel. With <code>--publish</code>, the publish step is
+also parallel. If any profile fails, Buffy continues with the others and
+reports a combined diagnostic at the end of the run, listing every profile
+that succeeded and every profile that failed with its underlying error.</p>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
+<p>Most variants require credentials to publish, supplied via environment
+variables. See <a href="#environment-variables-1">Environment Variables</a> for the
+complete list.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="golang-profiles"><a class="header" href="#golang-profiles">Golang Profiles</a></h1>
 <p>The <code>golang</code> profile generates a Go module from your <code>.proto</code> files and
@@ -355,7 +597,7 @@ publishes it to a Git repository. Go modules are versioned by Git tags, so
 the consuming side only needs <code>go get &lt;module&gt;@&lt;tag&gt;</code>.</p>
 <p>Available variants:</p>
 <ul>
-<li><a href="#the-git-variant"><code>git</code></a> — Push the generated module to a Git remote.</li>
+<li><a href="#the-git-variant-1"><code>git</code></a> — Push the generated module to a Git remote.</li>
 </ul>
 <h2 id="required-tools"><a class="header" href="#required-tools">Required tools</a></h2>
 <ul>
@@ -367,7 +609,7 @@ the consuming side only needs <code>go get &lt;module&gt;@&lt;tag&gt;</code>.</p
 </ul>
 <p><code>buffy check</code> verifies that all of these are installed and on the <code>PATH</code>,
 emitting installation hints if anything is missing.</p>
-<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<h2 id="the-git-variant-1"><a class="header" href="#the-git-variant-1">The <code>git</code> variant</a></h2>
 <p>Generates the Go module under <code>target/&lt;profile&gt;/</code>, runs <code>go mod init</code> and
 <code>go mod tidy</code> to populate <code>go.sum</code>, then commits the result and pushes it
 to the configured remote with a <code>v&lt;version&gt;</code> tag.</p>
@@ -432,19 +674,1039 @@ skips it instead of failing.</p>
 )
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="java"><a class="header" href="#java">Java</a></h1>
+<h1 id="java-profiles"><a class="header" href="#java-profiles">Java Profiles</a></h1>
+<p>The <code>java</code> profile generates a Maven project from your <code>.proto</code> files using
+<a href="https://protobuf.dev/reference/java/"><code>protoc-gen-java</code></a> and publishes it either to a Git repository or to
+<a href="https://central.sonatype.com/">Maven Central</a> via the <a href="https://central.sonatype.com/">Sonatype Central Portal</a>. Consumers depend on the
+artifact through a normal Maven (or Gradle) coordinate.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-maven_central-variant"><code>maven_central</code></a> — Publish to Maven Central.</li>
+<li><a href="#the-git-variant-2"><code>git</code></a> — Push the generated Maven project to a Git remote.</li>
+</ul>
+<h2 id="required-tools-1"><a class="header" href="#required-tools-1">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>java</code> — A JDK (11 or newer recommended), used by Maven.</li>
+<li><code>mvn</code> — Apache Maven, used to compile and (for <code>maven_central</code>) deploy.</li>
+<li><code>gpg</code> — GnuPG, used to sign artifacts. Required for the <code>maven_central</code>
+variant; not used by the <code>git</code> variant.</li>
+<li><code>git</code> — Required only for the <code>git</code> variant.</li>
+</ul>
+<p><code>buffy check</code> verifies that the relevant tools are installed for the configured
+variant.</p>
+<h2 id="the-maven_central-variant"><a class="header" href="#the-maven_central-variant">The <code>maven_central</code> variant</a></h2>
+<p>Generates a Maven project under <code>target/&lt;profile&gt;/</code>, runs <code>mvn compile</code> to
+verify, signs the artifacts with GPG, and uploads them to the Sonatype Central
+Portal via the <a href="https://central.sonatype.org/publish/publish-portal-maven/"><code>central-publishing-maven-plugin</code></a>.</p>
+<p>The Sonatype namespace must be verified for your account before the first
+publish (e.g., <code>io.github.&lt;your-github-user&gt;</code> is verified by creating a
+public repository named after a verification code Sonatype gives you).</p>
+<h3 id="example-1"><a class="header" href="#example-1">Example</a></h3>
+<pre><code class="language-toml"># .buffy/java-example.toml
+[java.maven_central]
+group_id = "io.github.example"
+artifact_id = "tomato"
+url = "https://github.com/example/tomato"
+auto_publish = false
+wait_until = "uploaded"
+
+[java.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<h3 id="fields-1"><a class="header" href="#fields-1">Fields</a></h3>
+<ul>
+<li><a href="#the-group_id-field"><code>group_id</code></a> — Maven group ID.</li>
+<li><a href="#the-artifact_id-field"><code>artifact_id</code></a> — Maven artifact ID.</li>
+<li><a href="#the-url-field"><code>url</code></a> — Project URL embedded in the POM.</li>
+<li><a href="#the-scm-section"><code>scm</code></a> — Source-control coordinates required by Maven Central.</li>
+<li><a href="#the-protobuf_version-field"><code>protobuf_version</code></a> — Pin the <code>protobuf-java</code> runtime version.</li>
+<li><a href="#the-auto_publish-field"><code>auto_publish</code></a> — Auto-release after upload validates.</li>
+<li><a href="#the-wait_until-field"><code>wait_until</code></a> — How far to wait in the publishing pipeline.</li>
+</ul>
+<h4 id="the-group_id-field"><a class="header" href="#the-group_id-field">The <code>group_id</code> field</a></h4>
+<p>The Maven <code>groupId</code> of the published artifact. Must match a namespace
+verified for your Sonatype account.</p>
+<pre><code class="language-toml">group_id = "io.github.example"
+</code></pre>
+<h4 id="the-artifact_id-field"><a class="header" href="#the-artifact_id-field">The <code>artifact_id</code> field</a></h4>
+<p>The Maven <code>artifactId</code> of the published artifact.</p>
+<pre><code class="language-toml">artifact_id = "tomato"
+</code></pre>
+<h4 id="the-url-field"><a class="header" href="#the-url-field">The <code>url</code> field</a></h4>
+<p>A project URL written to the <code>&lt;url&gt;</code> tag in the generated POM. Maven Central
+requires this field to be present.</p>
+<pre><code class="language-toml">url = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-scm-section"><a class="header" href="#the-scm-section">The <code>scm</code> section</a></h4>
+<p>Source-control coordinates required by Maven Central. Embedded in the
+<code>&lt;scm&gt;</code> block of the POM.</p>
+<pre><code class="language-toml">[java.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<ul>
+<li><code>connection</code> — The SCM connection string, conventionally
+<code>scm:git:&lt;git-url&gt;</code>.</li>
+<li><code>url</code> — A browsable URL for the source repository.</li>
+</ul>
+<h4 id="the-protobuf_version-field"><a class="header" href="#the-protobuf_version-field">The <code>protobuf_version</code> field</a></h4>
+<p>Optional. Pin a specific version of the <code>com.google.protobuf:protobuf-java</code>
+runtime dependency. If omitted, Buffy queries Maven Central for the latest
+release version.</p>
+<pre><code class="language-toml">protobuf_version = "4.29.3"
+</code></pre>
+<h4 id="the-auto_publish-field"><a class="header" href="#the-auto_publish-field">The <code>auto_publish</code> field</a></h4>
+<p>When <code>true</code>, the Sonatype Central Portal automatically releases the artifact
+after validation succeeds. When <code>false</code>, the artifact lands in the “Validated”
+state in the portal and must be released manually.</p>
+<pre><code class="language-toml">auto_publish = false
+</code></pre>
+<p>Default: <code>false</code>. For first releases, leave this off so you can manually
+verify the upload.</p>
+<h4 id="the-wait_until-field"><a class="header" href="#the-wait_until-field">The <code>wait_until</code> field</a></h4>
+<p>Controls how long the publish step waits before returning. One of:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Value</th><th>Waits for</th><th>Typical duration</th></tr>
+</thead>
+<tbody>
+<tr><td><code>uploaded</code></td><td>Upload to Sonatype completes</td><td>seconds</td></tr>
+<tr><td><code>validated</code></td><td>Sonatype validation (schema, GPG, etc.)</td><td>1–3 minutes</td></tr>
+<tr><td><code>published</code></td><td>Indexing into Maven Central completes</td><td>10–30 minutes</td></tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-toml">wait_until = "uploaded"
+</code></pre>
+<p>Default: <code>uploaded</code>.</p>
+<h3 id="required-environment-variables"><a class="header" href="#required-environment-variables">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MAVEN_USERNAME</code></td><td>Sonatype Central Portal username token</td></tr>
+<tr><td><code>MAVEN_PASSWORD</code></td><td>Sonatype Central Portal password token</td></tr>
+<tr><td><code>GPG_KEY_ID</code></td><td>GPG key ID used to sign the artifacts</td></tr>
+<tr><td><code>GPG_PASSPHRASE</code></td><td>Passphrase for the GPG key</td></tr>
+<tr><td><code>GPG_PRIVATE_KEY</code></td><td>Optional: armored private key, for CI runners</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="#environment-variables-1">Environment Variables</a> for details.</p>
+<h3 id="example-consumer-usage-1"><a class="header" href="#example-consumer-usage-1">Example consumer usage</a></h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.example&lt;/groupId&gt;
+  &lt;artifactId&gt;tomato&lt;/artifactId&gt;
+  &lt;version&gt;0.1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h2 id="the-git-variant-2"><a class="header" href="#the-git-variant-2">The <code>git</code> variant</a></h2>
+<p>Generates the same Maven project as <code>maven_central</code>, but commits and tags it
+to a Git repository instead of uploading. No GPG signing, no Sonatype account.
+Useful for internal sharing or quick prototypes.</p>
+<h3 id="example-1-1"><a class="header" href="#example-1-1">Example</a></h3>
+<pre><code class="language-toml"># .buffy/java.toml
+[java.git]
+group_id = "com.example"
+artifact_id = "tomato"
+url = "https://github.com/example/tomato-java"
+remote = "git@github.com:example/tomato-java.git"
+branch = "main"
+keep = ["README.md"]
+
+[java.git.scm]
+connection = "scm:git:git://github.com/example/tomato-java.git"
+url = "https://github.com/example/tomato-java"
+</code></pre>
+<h3 id="fields-1-1"><a class="header" href="#fields-1-1">Fields</a></h3>
+<ul>
+<li><a href="#the-group_id-field"><code>group_id</code></a> — as in <code>maven_central</code>.</li>
+<li><a href="#the-artifact_id-field"><code>artifact_id</code></a> — as in <code>maven_central</code>.</li>
+<li><a href="#the-url-field"><code>url</code></a> — as in <code>maven_central</code>.</li>
+<li><a href="#the-scm-section"><code>scm</code></a> — as in <code>maven_central</code>.</li>
+<li><a href="#the-protobuf_version-field"><code>protobuf_version</code></a> — as in <code>maven_central</code>.</li>
+<li><a href="#the-remote-field-1"><code>remote</code></a> — Git URL the artifact is pushed to.</li>
+<li><a href="#the-branch-field-1"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field-1"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<h4 id="the-remote-field-1"><a class="header" href="#the-remote-field-1">The <code>remote</code> field</a></h4>
+<p>The Git URL the generated Maven project is pushed to. SSH URLs are
+recommended because Buffy disables Git’s terminal prompt.</p>
+<pre><code class="language-toml">remote = "git@github.com:example/tomato-java.git"
+</code></pre>
+<h4 id="the-branch-field-1"><a class="header" href="#the-branch-field-1">The <code>branch</code> field</a></h4>
+<p>The branch to push to. Buffy force-pushes on every publish.</p>
+<pre><code class="language-toml">branch = "main"
+</code></pre>
+<h4 id="the-keep-field-1"><a class="header" href="#the-keep-field-1">The <code>keep</code> field</a></h4>
+<p>A list of file paths (relative to the repository root) to preserve across
+publishes by checking them out from the remote before committing.</p>
+<pre><code class="language-toml">keep = ["README.md"]
+</code></pre>
+<p>Default: <code>[]</code>.</p>
+<h3 id="example-consumer-usage-1-1"><a class="header" href="#example-consumer-usage-1-1">Example consumer usage</a></h3>
+<p>Maven projects can depend on a Git source via <a href="https://jitpack.io/">JitPack</a> or by cloning and
+running <code>mvn install</code> locally. Example with JitPack:</p>
+<pre><code class="language-xml">&lt;repositories&gt;
+  &lt;repository&gt;
+    &lt;id&gt;jitpack.io&lt;/id&gt;
+    &lt;url&gt;https://jitpack.io&lt;/url&gt;
+  &lt;/repository&gt;
+&lt;/repositories&gt;
+
+&lt;dependency&gt;
+  &lt;groupId&gt;com.github.example&lt;/groupId&gt;
+  &lt;artifactId&gt;tomato-java&lt;/artifactId&gt;
+  &lt;version&gt;v0.1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="kotlin"><a class="header" href="#kotlin">Kotlin</a></h1>
+<h1 id="kotlin-profiles"><a class="header" href="#kotlin-profiles">Kotlin Profiles</a></h1>
+<p>The <code>kotlin</code> profile generates a Maven project from your <code>.proto</code> files. Buffy
+uses <code>protoc-gen-java</code> to generate the message classes and packages them
+together with the Kotlin standard library so the artifact can be consumed
+naturally from Kotlin code. Kotlin can call Java protobuf classes directly, so
+no separate Kotlin code generation is required.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-maven_central-variant-1"><code>maven_central</code></a> — Publish to Maven Central.</li>
+<li><a href="#the-git-variant-3"><code>git</code></a> — Push the generated Maven project to a Git remote.</li>
+</ul>
+<h2 id="required-tools-2"><a class="header" href="#required-tools-2">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>java</code> — A JDK (11 or newer recommended).</li>
+<li><code>mvn</code> — Apache Maven; the Kotlin compiler is downloaded automatically as a
+Maven plugin, no separate <code>kotlin</code> binary is required.</li>
+<li><code>gpg</code> — GnuPG, for the <code>maven_central</code> variant.</li>
+<li><code>git</code> — For the <code>git</code> variant.</li>
+</ul>
+<h2 id="the-maven_central-variant-1"><a class="header" href="#the-maven_central-variant-1">The <code>maven_central</code> variant</a></h2>
+<p>Generates a Maven project that compiles both Java (from <code>protoc</code>) and Kotlin
+sources, then publishes the resulting JAR (with sources and Javadoc) to Maven
+Central via the Sonatype Central Portal.</p>
+<h3 id="example-2"><a class="header" href="#example-2">Example</a></h3>
+<pre><code class="language-toml"># .buffy/kotlin-example.toml
+[kotlin.maven_central]
+group_id = "io.github.example"
+artifact_id = "tomato-kotlin"
+url = "https://github.com/example/tomato"
+auto_publish = false
+wait_until = "uploaded"
+
+[kotlin.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<h3 id="fields-2"><a class="header" href="#fields-2">Fields</a></h3>
+<ul>
+<li><a href="#the-group_id-field-1"><code>group_id</code></a> — Maven group ID.</li>
+<li><a href="#the-artifact_id-field-1"><code>artifact_id</code></a> — Maven artifact ID.</li>
+<li><a href="#the-url-field-1"><code>url</code></a> — Project URL embedded in the POM.</li>
+<li><a href="#the-scm-section-1"><code>scm</code></a> — Source-control coordinates.</li>
+<li><a href="#the-protobuf_version-field-1"><code>protobuf_version</code></a> — Pin <code>protobuf-java</code> runtime.</li>
+<li><a href="#the-kotlin_version-field"><code>kotlin_version</code></a> — Pin Kotlin compiler version.</li>
+<li><a href="#the-auto_publish-field-1"><code>auto_publish</code></a> — Auto-release after upload validates.</li>
+<li><a href="#the-wait_until-field-1"><code>wait_until</code></a> — How far to wait in the pipeline.</li>
+</ul>
+<h4 id="the-group_id-field-1"><a class="header" href="#the-group_id-field-1">The <code>group_id</code> field</a></h4>
+<p>The Maven <code>groupId</code>. Must match a namespace verified for your Sonatype
+account.</p>
+<pre><code class="language-toml">group_id = "io.github.example"
+</code></pre>
+<h4 id="the-artifact_id-field-1"><a class="header" href="#the-artifact_id-field-1">The <code>artifact_id</code> field</a></h4>
+<p>The Maven <code>artifactId</code>.</p>
+<pre><code class="language-toml">artifact_id = "tomato-kotlin"
+</code></pre>
+<h4 id="the-url-field-1"><a class="header" href="#the-url-field-1">The <code>url</code> field</a></h4>
+<p>The project URL embedded in the POM <code>&lt;url&gt;</code> tag.</p>
+<pre><code class="language-toml">url = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-scm-section-1"><a class="header" href="#the-scm-section-1">The <code>scm</code> section</a></h4>
+<pre><code class="language-toml">[kotlin.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-protobuf_version-field-1"><a class="header" href="#the-protobuf_version-field-1">The <code>protobuf_version</code> field</a></h4>
+<p>Optional. Pin a specific version of the <code>com.google.protobuf:protobuf-java</code>
+runtime dependency. If omitted, Buffy queries Maven Central for the latest
+release.</p>
+<pre><code class="language-toml">protobuf_version = "4.29.3"
+</code></pre>
+<h4 id="the-kotlin_version-field"><a class="header" href="#the-kotlin_version-field">The <code>kotlin_version</code> field</a></h4>
+<p>Optional. Pin a specific version of the Kotlin compiler and standard library.
+If omitted, Buffy queries Maven Central for the latest release of
+<code>org.jetbrains.kotlin:kotlin-stdlib</code>.</p>
+<pre><code class="language-toml">kotlin_version = "2.0.21"
+</code></pre>
+<h4 id="the-auto_publish-field-1"><a class="header" href="#the-auto_publish-field-1">The <code>auto_publish</code> field</a></h4>
+<p>See <a href="#the-auto_publish-field"><code>auto_publish</code> in Java profiles</a>.</p>
+<h4 id="the-wait_until-field-1"><a class="header" href="#the-wait_until-field-1">The <code>wait_until</code> field</a></h4>
+<p>See <a href="#the-wait_until-field"><code>wait_until</code> in Java profiles</a>.</p>
+<h3 id="required-environment-variables-1"><a class="header" href="#required-environment-variables-1">Required environment variables</a></h3>
+<p>Same as <a href="#required-environment-variables">Java</a>.</p>
+<h3 id="example-consumer-usage-2"><a class="header" href="#example-consumer-usage-2">Example consumer usage</a></h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.example&lt;/groupId&gt;
+  &lt;artifactId&gt;tomato-kotlin&lt;/artifactId&gt;
+  &lt;version&gt;0.1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<pre><code class="language-kotlin">import io.github.example.tomato.GreeterOuterClass.HelloRequest
+
+val req = HelloRequest.newBuilder().setName("World").build()
+println(req.name)
+</code></pre>
+<h2 id="the-git-variant-3"><a class="header" href="#the-git-variant-3">The <code>git</code> variant</a></h2>
+<p>Like the Java <code>git</code> variant, but with Kotlin tooling configured in the POM.</p>
+<h3 id="example-1-2"><a class="header" href="#example-1-2">Example</a></h3>
+<pre><code class="language-toml"># .buffy/kotlin.toml
+[kotlin.git]
+group_id = "com.example"
+artifact_id = "tomato-kotlin"
+url = "https://github.com/example/tomato-kotlin"
+remote = "git@github.com:example/tomato-kotlin.git"
+branch = "main"
+keep = ["README.md"]
+
+[kotlin.git.scm]
+connection = "scm:git:git://github.com/example/tomato-kotlin.git"
+url = "https://github.com/example/tomato-kotlin"
+</code></pre>
+<h3 id="fields-1-2"><a class="header" href="#fields-1-2">Fields</a></h3>
+<p>The same fields as <code>maven_central</code>, plus:</p>
+<ul>
+<li><a href="#the-remote-field-1"><code>remote</code></a> — Git URL the artifact is pushed to.</li>
+<li><a href="#the-branch-field-1"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field-1"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<p>These behave identically to the same-named fields in <a href="#java-profiles">Java profiles</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rust"><a class="header" href="#rust">Rust</a></h1>
+<h1 id="rust-profiles"><a class="header" href="#rust-profiles">Rust Profiles</a></h1>
+<p>The <code>rust</code> profile generates a Cargo crate from your <code>.proto</code> files using
+<a href="https://github.com/tokio-rs/prost"><code>prost</code></a> and (optionally) <a href="https://github.com/hyperium/tonic"><code>tonic</code></a> for gRPC. The crate is published either
+to <a href="https://crates.io/">crates.io</a> (or any Cargo-compatible registry) or to a Git repository.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-crate-variant"><code>crate</code></a> — Publish to a Cargo registry.</li>
+<li><a href="#the-git-variant-4"><code>git</code></a> — Push the generated crate to a Git remote.</li>
+</ul>
+<h2 id="required-tools-3"><a class="header" href="#required-tools-3">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>protoc-gen-prost</code> — Rust message generator.</li>
+<li><code>protoc-gen-prost-crate</code> — Crate-layout generator.</li>
+<li><code>protoc-gen-tonic</code> — gRPC plugin (only when <code>grpc = true</code>).</li>
+<li><code>cargo</code> — Rust toolchain, used for <code>cargo build</code> and <code>cargo publish</code>.</li>
+<li><code>git</code> — Required only for the <code>git</code> variant.</li>
+</ul>
+<p>The <code>protoc-gen-*</code> plugins are installed via Cargo:</p>
+<pre><code class="language-sh">cargo install protoc-gen-prost protoc-gen-prost-crate protoc-gen-tonic
+</code></pre>
+<h2 id="the-crate-variant"><a class="header" href="#the-crate-variant">The <code>crate</code> variant</a></h2>
+<p>Generates a Cargo crate under <code>target/&lt;profile&gt;/</code>, runs <code>cargo build</code> to
+verify, then runs <code>cargo publish</code> against the configured registry.</p>
+<h3 id="example-3"><a class="header" href="#example-3">Example</a></h3>
+<pre><code class="language-toml"># .buffy/rust-example.toml
+[rust.crate]
+name = "tomato"
+edition = "2021"
+repository = "https://github.com/example/tomato"
+documentation = "https://docs.rs/tomato"
+registry = "crates-io"
+grpc = true
+</code></pre>
+<h3 id="fields-3"><a class="header" href="#fields-3">Fields</a></h3>
+<ul>
+<li><a href="#the-name-field-1"><code>name</code></a> — Crate name as it appears in <code>Cargo.toml</code>.</li>
+<li><a href="#the-edition-field"><code>edition</code></a> — Rust edition.</li>
+<li><a href="#the-repository-field"><code>repository</code></a> — Repository URL embedded in the crate.</li>
+<li><a href="#the-documentation-field"><code>documentation</code></a> — Documentation URL.</li>
+<li><a href="#the-registry-field"><code>registry</code></a> — Cargo registry name.</li>
+<li><a href="#the-prost_version-field"><code>prost_version</code></a> — Pin <code>prost</code> runtime.</li>
+<li><a href="#the-tonic_version-field"><code>tonic_version</code></a> — Pin <code>tonic</code> runtime.</li>
+<li><a href="#the-grpc-field-1"><code>grpc</code></a> — Generate gRPC service stubs.</li>
+</ul>
+<h4 id="the-name-field-1"><a class="header" href="#the-name-field-1">The <code>name</code> field</a></h4>
+<p>The crate name as it will appear in <code>Cargo.toml</code> and on the registry. Must
+follow Cargo naming rules (lowercase, hyphens permitted).</p>
+<pre><code class="language-toml">name = "tomato"
+</code></pre>
+<p>The library name (i.e. the Rust module name) is derived by replacing
+hyphens with underscores: <code>tomato-rs</code> becomes <code>tomato_rs</code>.</p>
+<h4 id="the-edition-field"><a class="header" href="#the-edition-field">The <code>edition</code> field</a></h4>
+<p>The Rust edition for the generated crate.</p>
+<pre><code class="language-toml">edition = "2021"
+</code></pre>
+<p>Common values: <code>"2021"</code>, <code>"2024"</code>. The edition is written verbatim to the
+generated <code>Cargo.toml</code>.</p>
+<h4 id="the-repository-field"><a class="header" href="#the-repository-field">The <code>repository</code> field</a></h4>
+<p>A URL to the source repository. Embedded in the crate’s <code>Cargo.toml</code> as the
+<code>repository</code> field.</p>
+<pre><code class="language-toml">repository = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-documentation-field"><a class="header" href="#the-documentation-field">The <code>documentation</code> field</a></h4>
+<p>A URL to the crate’s documentation page.</p>
+<pre><code class="language-toml">documentation = "https://docs.rs/tomato"
+</code></pre>
+<h4 id="the-registry-field"><a class="header" href="#the-registry-field">The <code>registry</code> field</a></h4>
+<p>The name of the Cargo registry to publish to. The special value
+<code>"crates-io"</code> targets <a href="https://crates.io/">crates.io</a> directly. Any other value must correspond
+to a registry configured in the user’s <code>~/.cargo/config.toml</code>:</p>
+<pre><code class="language-toml"># ~/.cargo/config.toml
+[registries]
+my-registry = { index = "sparse+https://my-kellnr.example.com/api/v1/crates/" }
+</code></pre>
+<pre><code class="language-toml"># .buffy/rust.toml
+registry = "my-registry"
+</code></pre>
+<p>Default: <code>"crates-io"</code>.</p>
+<h4 id="the-prost_version-field"><a class="header" href="#the-prost_version-field">The <code>prost_version</code> field</a></h4>
+<p>Optional. Pin the <code>prost</code> runtime version. If omitted, Buffy queries
+crates.io for the latest release.</p>
+<pre><code class="language-toml">prost_version = "0.13"
+</code></pre>
+<h4 id="the-tonic_version-field"><a class="header" href="#the-tonic_version-field">The <code>tonic_version</code> field</a></h4>
+<p>Optional. Pin the <code>tonic</code> runtime version (and <code>tonic-prost</code> for tonic 0.13+).
+Only used when <code>grpc = true</code>. If omitted, Buffy queries crates.io for the
+latest release.</p>
+<pre><code class="language-toml">tonic_version = "0.13"
+</code></pre>
+<h4 id="the-grpc-field-1"><a class="header" href="#the-grpc-field-1">The <code>grpc</code> field</a></h4>
+<p>When <code>true</code>, Buffy invokes <code>protoc-gen-tonic</code> and includes <code>tonic</code> and
+<code>tonic-prost</code> in the crate’s dependencies.</p>
+<pre><code class="language-toml">grpc = true
+</code></pre>
+<p>Default: <code>false</code>.</p>
+<h3 id="required-environment-variables-2"><a class="header" href="#required-environment-variables-2">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>CARGO_REGISTRY_TOKEN</code></td><td>Token for the configured registry (publish auth)</td></tr>
+</tbody>
+</table>
+</div>
+<p>For non-<code>crates-io</code> registries, the index URL must be configured in
+<code>~/.cargo/config.toml</code> as shown above.</p>
+<h3 id="example-consumer-usage-3"><a class="header" href="#example-consumer-usage-3">Example consumer usage</a></h3>
+<pre><code class="language-sh">cargo add tomato
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use tomato::greeter::HelloRequest;
+
+let req = HelloRequest { name: "World".into() };
+println!("{}", req.name);
+<span class="boring">}</span></code></pre>
+<h2 id="the-git-variant-4"><a class="header" href="#the-git-variant-4">The <code>git</code> variant</a></h2>
+<p>Generates the same crate as <code>crate</code>, but commits and tags it to a Git
+repository instead of uploading to a registry. Useful when you want to
+distribute internally without setting up a registry, or to give consumers
+a reproducible Git pin.</p>
+<h3 id="example-1-3"><a class="header" href="#example-1-3">Example</a></h3>
+<pre><code class="language-toml"># .buffy/rust.toml
+[rust.git]
+name = "tomato"
+edition = "2021"
+remote = "git@github.com:example/tomato-rs.git"
+branch = "main"
+repository = "https://github.com/example/tomato-rs"
+documentation = "https://github.com/example/tomato-rs"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="fields-1-3"><a class="header" href="#fields-1-3">Fields</a></h3>
+<p>The same fields as <code>crate</code> (except <code>registry</code>, which doesn’t apply), plus:</p>
+<ul>
+<li><a href="#the-remote-field-2"><code>remote</code></a> — Git URL the crate is pushed to.</li>
+<li><a href="#the-branch-field-2"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field-2"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<h4 id="the-remote-field-2"><a class="header" href="#the-remote-field-2">The <code>remote</code> field</a></h4>
+<pre><code class="language-toml">remote = "git@github.com:example/tomato-rs.git"
+</code></pre>
+<h4 id="the-branch-field-2"><a class="header" href="#the-branch-field-2">The <code>branch</code> field</a></h4>
+<pre><code class="language-toml">branch = "main"
+</code></pre>
+<h4 id="the-keep-field-2"><a class="header" href="#the-keep-field-2">The <code>keep</code> field</a></h4>
+<pre><code class="language-toml">keep = ["README.md"]
+</code></pre>
+<p>Default: <code>[]</code>.</p>
+<h3 id="example-consumer-usage-1-2"><a class="header" href="#example-consumer-usage-1-2">Example consumer usage</a></h3>
+<pre><code class="language-toml"># in the consumer's Cargo.toml
+[dependencies]
+tomato = { git = "https://github.com/example/tomato-rs", tag = "v0.1.0" }
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="javascript"><a class="header" href="#javascript">JavaScript</a></h1>
+<h1 id="javascript-profiles"><a class="header" href="#javascript-profiles">JavaScript Profiles</a></h1>
+<p>The <code>javascript</code> profile generates a CommonJS JavaScript library from your
+<code>.proto</code> files using <a href="https://github.com/protocolbuffers/protobuf-javascript"><code>protoc-gen-js</code></a> and (optionally) <a href="https://github.com/grpc/grpc-web">gRPC-Web</a> for
+browser-compatible gRPC. The package is published either to npm or to a Git
+repository.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-npm-variant"><code>npm</code></a> — Publish to npm or another npm-compatible registry.</li>
+<li><a href="#the-git-variant-5"><code>git</code></a> — Push the generated package to a Git remote.</li>
+</ul>
+<h2 id="required-tools-4"><a class="header" href="#required-tools-4">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>protoc-gen-js</code> — JavaScript code generator.</li>
+<li><code>protoc-gen-grpc-web</code> — gRPC-Web plugin (only when <code>grpc = true</code>).</li>
+<li><code>node</code> — Node.js runtime.</li>
+<li><code>npm</code> — npm CLI, used to install dependencies and publish.</li>
+<li><code>git</code> — Required only for the <code>git</code> variant.</li>
+</ul>
+<h2 id="the-npm-variant"><a class="header" href="#the-npm-variant">The <code>npm</code> variant</a></h2>
+<p>Generates a JavaScript package under <code>target/&lt;profile&gt;/</code>, validates the
+<code>package.json</code> by running <code>npm install</code> and <code>npm publish --dry-run</code>, then
+publishes via <code>npm publish</code>.</p>
+<h3 id="example-4"><a class="header" href="#example-4">Example</a></h3>
+<pre><code class="language-toml"># .buffy/js-example.toml
+[javascript.npm]
+name = "@example/tomato"
+registry = "https://registry.npmjs.org/"
+access = "public"
+repository = "https://github.com/example/tomato"
+homepage = "https://github.com/example/tomato"
+grpc = true
+</code></pre>
+<h3 id="fields-4"><a class="header" href="#fields-4">Fields</a></h3>
+<ul>
+<li><a href="#the-name-field-2"><code>name</code></a> — npm package name.</li>
+<li><a href="#the-registry-field-1"><code>registry</code></a> — Registry URL.</li>
+<li><a href="#the-access-field"><code>access</code></a> — <code>"public"</code> or <code>"restricted"</code> for scoped packages.</li>
+<li><a href="#the-repository-field-1"><code>repository</code></a> — Repository URL embedded in the package.</li>
+<li><a href="#the-homepage-field-1"><code>homepage</code></a> — Override the global homepage.</li>
+<li><a href="#the-grpc-field-2"><code>grpc</code></a> — Generate gRPC-Web service stubs.</li>
+</ul>
+<h4 id="the-name-field-2"><a class="header" href="#the-name-field-2">The <code>name</code> field</a></h4>
+<p>The npm package name. Scoped packages (e.g. <code>@example/tomato</code>) are supported.</p>
+<pre><code class="language-toml">name = "@example/tomato"
+</code></pre>
+<h4 id="the-registry-field-1"><a class="header" href="#the-registry-field-1">The <code>registry</code> field</a></h4>
+<p>Optional. The npm registry URL to publish to. Examples:</p>
+<ul>
+<li><code>"https://registry.npmjs.org/"</code> — the public npm registry.</li>
+<li><code>"https://npm.pkg.github.com/"</code> — GitHub Packages.</li>
+<li><code>"http://localhost:4873/"</code> — a local Verdaccio instance for testing.</li>
+</ul>
+<pre><code class="language-toml">registry = "https://registry.npmjs.org/"
+</code></pre>
+<p>Default: <code>"https://registry.npmjs.org/"</code>.</p>
+<h4 id="the-access-field"><a class="header" href="#the-access-field">The <code>access</code> field</a></h4>
+<p>Optional. Controls the access level for scoped packages:</p>
+<ul>
+<li><code>"public"</code> — the package is publicly readable.</li>
+<li><code>"restricted"</code> — the package requires authentication to read (paid npm
+feature).</li>
+</ul>
+<p>For unscoped packages, the value has no effect.</p>
+<pre><code class="language-toml">access = "public"
+</code></pre>
+<p>Default: <code>"public"</code>.</p>
+<h4 id="the-repository-field-1"><a class="header" href="#the-repository-field-1">The <code>repository</code> field</a></h4>
+<p>A URL to the source repository, embedded in <code>package.json</code> as the
+<code>repository.url</code> field.</p>
+<pre><code class="language-toml">repository = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-homepage-field-1"><a class="header" href="#the-homepage-field-1">The <code>homepage</code> field</a></h4>
+<p>Optional. Overrides the package’s homepage URL. If omitted, the value from
+the global <code>[package]</code> section’s <code>homepage</code> field is used.</p>
+<pre><code class="language-toml">homepage = "https://example.com/tomato"
+</code></pre>
+<h4 id="the-grpc-field-2"><a class="header" href="#the-grpc-field-2">The <code>grpc</code> field</a></h4>
+<p>When <code>true</code>, Buffy invokes <code>protoc-gen-grpc-web</code> to generate browser-compatible
+gRPC-Web service stubs and includes <code>grpc-web</code> in the package’s dependencies.</p>
+<pre><code class="language-toml">grpc = true
+</code></pre>
+<p>Default: <code>false</code>.</p>
+<h3 id="required-environment-variables-3"><a class="header" href="#required-environment-variables-3">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NPM_TOKEN</code></td><td>Auth token for the configured registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>The token can come from <code>npm token create</code> (npm) or the corresponding
+mechanism for your registry (Verdaccio, GitHub Packages, etc.).</p>
+<h3 id="example-consumer-usage-4"><a class="header" href="#example-consumer-usage-4">Example consumer usage</a></h3>
+<pre><code class="language-sh">npm install @example/tomato
+</code></pre>
+<pre><code class="language-js">const { HelloRequest } = require("@example/tomato/greeter_pb");
+
+const req = new HelloRequest();
+req.setName("World");
+console.log(req.getName());
+</code></pre>
+<h2 id="the-git-variant-5"><a class="header" href="#the-git-variant-5">The <code>git</code> variant</a></h2>
+<p>Generates the same JavaScript package as <code>npm</code>, but commits and tags it to a
+Git repository instead of uploading to a registry.</p>
+<h3 id="example-1-4"><a class="header" href="#example-1-4">Example</a></h3>
+<pre><code class="language-toml"># .buffy/javascript.toml
+[javascript.git]
+name = "@example/tomato"
+remote = "git@github.com:example/tomato-js.git"
+branch = "main"
+repository = "https://github.com/example/tomato-js"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="fields-1-4"><a class="header" href="#fields-1-4">Fields</a></h3>
+<p>The same fields as <code>npm</code> (except <code>registry</code> and <code>access</code>), plus:</p>
+<ul>
+<li><a href="#the-remote-field-3"><code>remote</code></a> — Git URL the package is pushed to.</li>
+<li><a href="#the-branch-field-3"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field-3"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<h4 id="the-remote-field-3"><a class="header" href="#the-remote-field-3">The <code>remote</code> field</a></h4>
+<pre><code class="language-toml">remote = "git@github.com:example/tomato-js.git"
+</code></pre>
+<h4 id="the-branch-field-3"><a class="header" href="#the-branch-field-3">The <code>branch</code> field</a></h4>
+<pre><code class="language-toml">branch = "main"
+</code></pre>
+<h4 id="the-keep-field-3"><a class="header" href="#the-keep-field-3">The <code>keep</code> field</a></h4>
+<pre><code class="language-toml">keep = ["README.md"]
+</code></pre>
+<p>Default: <code>[]</code>.</p>
+<h3 id="example-consumer-usage-1-3"><a class="header" href="#example-consumer-usage-1-3">Example consumer usage</a></h3>
+<p>npm packages can be installed directly from a Git source:</p>
+<pre><code class="language-sh">npm install git+ssh://git@github.com/example/tomato-js.git#v0.1.0
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="typescript"><a class="header" href="#typescript">TypeScript</a></h1>
+<h1 id="typescript-profiles"><a class="header" href="#typescript-profiles">TypeScript Profiles</a></h1>
+<p>The <code>typescript</code> profile generates a TypeScript library from your <code>.proto</code>
+files using <a href="https://github.com/stephenh/ts-proto"><code>ts-proto</code></a> and compiles it with <code>tsc</code> before publishing. The
+package contains both compiled JavaScript and <code>.d.ts</code> declarations.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-npm-variant-1"><code>npm</code></a> — Publish to npm or another npm-compatible registry.</li>
+<li><a href="#the-git-variant-6"><code>git</code></a> — Push the generated package to a Git remote.</li>
+</ul>
+<h2 id="required-tools-5"><a class="header" href="#required-tools-5">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>protoc-gen-ts_proto</code> — TypeScript generator from <a href="https://github.com/stephenh/ts-proto"><code>ts-proto</code></a>.</li>
+<li><code>node</code> — Node.js runtime.</li>
+<li><code>npm</code> — npm CLI, used for install, build, and publish.</li>
+<li><code>tsc</code> — TypeScript compiler.</li>
+<li><code>git</code> — Required only for the <code>git</code> variant.</li>
+</ul>
+<p>Install the TypeScript tooling globally:</p>
+<pre><code class="language-sh">npm install -g ts-proto typescript
+</code></pre>
+<h2 id="the-npm-variant-1"><a class="header" href="#the-npm-variant-1">The <code>npm</code> variant</a></h2>
+<p>Generates a TypeScript package under <code>target/&lt;profile&gt;/</code>, runs <code>npm install</code>
+to fetch dependencies, runs <code>tsc</code> via <code>npm run build</code> to produce <code>dist/</code>, then
+publishes via <code>npm publish</code>.</p>
+<h3 id="example-5"><a class="header" href="#example-5">Example</a></h3>
+<pre><code class="language-toml"># .buffy/ts-example.toml
+[typescript.npm]
+name = "@example/tomato"
+registry = "https://registry.npmjs.org/"
+access = "public"
+repository = "https://github.com/example/tomato"
+grpc = true
+</code></pre>
+<h3 id="fields-5"><a class="header" href="#fields-5">Fields</a></h3>
+<ul>
+<li><a href="#the-name-field"><code>name</code></a> — npm package name.</li>
+<li><a href="#the-registry-field"><code>registry</code></a> — Registry URL.</li>
+<li><a href="#the-access-field"><code>access</code></a> — <code>"public"</code> or <code>"restricted"</code> for scoped packages.</li>
+<li><a href="#the-repository-field"><code>repository</code></a> — Repository URL embedded in the package.</li>
+<li><a href="#the-homepage-field"><code>homepage</code></a> — Override the global homepage.</li>
+<li><a href="#the-grpc-field"><code>grpc</code></a> — Generate gRPC service stubs.</li>
+</ul>
+<p>The semantics of these fields are the same as in the <a href="#the-npm-variant">JavaScript <code>npm</code>
+variant</a>. The differences in the generated
+output are in the code itself, not the configuration:</p>
+<ul>
+<li>TypeScript output uses ES interfaces and types instead of JavaScript classes.</li>
+<li>gRPC stubs use <a href="https://github.com/deeplay-io/nice-grpc"><code>nice-grpc</code></a> (Node.js and browser compatible) instead of
+<code>grpc-web</code>.</li>
+<li>The package includes a <code>tsc</code> build step before publishing, so consumers
+receive precompiled JavaScript and <code>.d.ts</code> files.</li>
+</ul>
+<h3 id="required-environment-variables-4"><a class="header" href="#required-environment-variables-4">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NPM_TOKEN</code></td><td>Auth token for the configured registry</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="example-consumer-usage-5"><a class="header" href="#example-consumer-usage-5">Example consumer usage</a></h3>
+<pre><code class="language-sh">npm install @example/tomato
+</code></pre>
+<pre><code class="language-ts">import { HelloRequest } from "@example/tomato";
+
+const req: HelloRequest = { name: "World" };
+console.log(req.name);
+</code></pre>
+<h2 id="the-git-variant-6"><a class="header" href="#the-git-variant-6">The <code>git</code> variant</a></h2>
+<p>Generates the same TypeScript package as <code>npm</code>, but commits and tags it to a
+Git repository instead of uploading to a registry.</p>
+<h3 id="example-1-5"><a class="header" href="#example-1-5">Example</a></h3>
+<pre><code class="language-toml"># .buffy/typescript.toml
+[typescript.git]
+name = "@example/tomato"
+remote = "git@github.com:example/tomato-ts.git"
+branch = "main"
+repository = "https://github.com/example/tomato-ts"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="fields-1-5"><a class="header" href="#fields-1-5">Fields</a></h3>
+<p>The same fields as <code>npm</code> (except <code>registry</code> and <code>access</code>), plus:</p>
+<ul>
+<li><a href="#the-remote-field-3"><code>remote</code></a> — Git URL the package is pushed to.</li>
+<li><a href="#the-branch-field-3"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="#the-keep-field-3"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<p>These fields behave identically to the same-named fields in
+<a href="#javascript-profiles">JavaScript profiles</a>.</p>
+<h3 id="example-consumer-usage-1-4"><a class="header" href="#example-consumer-usage-1-4">Example consumer usage</a></h3>
+<pre><code class="language-sh">npm install git+ssh://git@github.com/example/tomato-ts.git#v0.1.0
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h1>
+<h1 id="environment-variables-1"><a class="header" href="#environment-variables-1">Environment Variables</a></h1>
+<p>Buffy reads credentials and a few configuration values from environment
+variables rather than from <code>Buffy.toml</code> or the profile files. This keeps
+secrets out of source control and matches the conventions of the underlying
+tooling (Cargo, Maven, npm).</p>
+<p>For local development, Buffy auto-loads a <code>.env</code> file from the current
+directory via <a href="https://crates.io/crates/dotenvy"><code>dotenvy</code></a>. For CI, set the variables through your provider’s
+secret store (GitHub Actions secrets, GitLab CI variables, etc.).</p>
+<h2 id="quoting-in-env-files"><a class="header" href="#quoting-in-env-files">Quoting in <code>.env</code> files</a></h2>
+<p><code>dotenvy</code> follows shell-like rules. Values containing <code>$</code>, <code>#</code>, whitespace, or
+other special characters should be wrapped in <strong>single quotes</strong> to disable
+variable expansion and escaping:</p>
+<pre><code class="language-env">GPG_PASSPHRASE='HD$qOdHYiG#jGUCpNJhzSSx5W'
+NPM_TOKEN='npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+</code></pre>
+<p>Double-quoted values allow <code>$VAR</code> expansion, which can silently corrupt
+secrets that contain a <code>$</code>.</p>
+<h2 id="variables-by-language"><a class="header" href="#variables-by-language">Variables by language</a></h2>
+<h3 id="java-and-kotlin"><a class="header" href="#java-and-kotlin">Java and Kotlin</a></h3>
+<p>Used by the <code>maven_central</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>MAVEN_USERNAME</code></td><td>yes</td><td>Sonatype Central Portal username token</td></tr>
+<tr><td><code>MAVEN_PASSWORD</code></td><td>yes</td><td>Sonatype Central Portal password token</td></tr>
+<tr><td><code>GPG_KEY_ID</code></td><td>yes</td><td>GPG key ID used for signing artifacts</td></tr>
+<tr><td><code>GPG_PASSPHRASE</code></td><td>optional</td><td>Passphrase for the GPG key (omit if the key has no passphrase)</td></tr>
+<tr><td><code>GPG_PRIVATE_KEY</code></td><td>optional</td><td>Armored private key, imported on each run (intended for CI)</td></tr>
+</tbody>
+</table>
+</div>
+<p>The <code>MAVEN_USERNAME</code> / <code>MAVEN_PASSWORD</code> pair is generated as a token from your
+account at <a href="https://central.sonatype.com">central.sonatype.com</a> under
+<strong>Profile → User Token</strong>.</p>
+<p><code>GPG_PRIVATE_KEY</code> is intended for CI runners that don’t have a persistent
+keyring. When set, Buffy writes the key to a temporary file, runs
+<code>gpg --import</code>, and removes the file. Do <strong>not</strong> set this on machines that
+already have the key in their local keyring.</p>
+<h3 id="rust"><a class="header" href="#rust">Rust</a></h3>
+<p>Used by the <code>crate</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>CARGO_REGISTRY_TOKEN</code></td><td>yes</td><td>API token for the configured Cargo registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>For <a href="https://crates.io/">crates.io</a>, generate the token under <strong>Account → API Tokens</strong>. For
+self-hosted registries (e.g. <a href="https://kellnr.io/">Kellnr</a>), use the token-issuing mechanism of the
+registry. The registry index URL must additionally be configured in
+<code>~/.cargo/config.toml</code>:</p>
+<pre><code class="language-toml">[registries]
+my-registry = { index = "sparse+https://my-kellnr.example.com/api/v1/crates/" }
+</code></pre>
+<h3 id="javascript-and-typescript"><a class="header" href="#javascript-and-typescript">JavaScript and TypeScript</a></h3>
+<p>Used by the <code>npm</code> variant; not required for the <code>git</code> variant.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Required</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>NPM_TOKEN</code></td><td>yes</td><td>Auth token for the configured registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>For the public npm registry, generate the token via <code>npm token create</code> or in
+the npmjs.com web UI. For other registries (Verdaccio, GitHub Packages, etc.),
+use the registry’s token-issuing mechanism.</p>
+<p>Buffy writes a temporary <code>.npmrc</code> to the build directory containing the token
+and the configured registry URL, then removes it after publishing. Existing
+<code>.npmrc</code> files in your home directory are not used.</p>
+<h3 id="golang"><a class="header" href="#golang">Golang</a></h3>
+<p>The <code>golang</code> profile only supports a <code>git</code> variant, which uses Git itself for
+authentication. Configure your SSH agent or HTTPS credentials via Git as
+usual; Buffy does not read any environment variables for this profile.</p>
+<h2 id="variables-by-use-case"><a class="header" href="#variables-by-use-case">Variables by use case</a></h2>
+<h3 id="local-development"><a class="header" href="#local-development">Local development</a></h3>
+<p>The minimal <code>.env</code> to publish from a developer machine across all targets:</p>
+<pre><code class="language-env"># Java / Kotlin (Maven Central)
+MAVEN_USERNAME='your-sonatype-username'
+MAVEN_PASSWORD='your-sonatype-token'
+GPG_KEY_ID='YOURGPGKEYID0123456789ABCDEF'
+GPG_PASSPHRASE='your-gpg-passphrase'
+
+# Rust (crates.io or other Cargo registry)
+CARGO_REGISTRY_TOKEN='your-cargo-token'
+
+# JavaScript / TypeScript (npm)
+NPM_TOKEN='your-npm-token'
+</code></pre>
+<p>For Git-only profiles, no environment variables are required — Git uses your
+SSH agent.</p>
+<h3 id="ci"><a class="header" href="#ci">CI</a></h3>
+<p>In CI, additionally set <code>GPG_PRIVATE_KEY</code> so that the runner can import the
+signing key on each run:</p>
+<pre><code class="language-env">GPG_PRIVATE_KEY='-----BEGIN PGP PRIVATE KEY BLOCK-----
+...
+-----END PGP PRIVATE KEY BLOCK-----'
+</code></pre>
+<p>CI secret stores typically support multiline values directly. If yours does
+not, base64-encode the key and decode it in your pipeline before exposing it
+as <code>GPG_PRIVATE_KEY</code>.</p>
+<h2 id="behavior"><a class="header" href="#behavior">Behavior</a></h2>
+<p>When a required variable is missing or set to an empty string, Buffy emits a
+diagnostic identifying the variable, the profile that requires it, and a
+short hint on how to obtain it. The build does not proceed past this point.</p>
+<p>Variables are only consulted at the moment they are needed. For instance,
+<code>buffy check</code> does not require any of these to be set, since it does not
+publish anything.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command-Line Interface</a></h1>
+<p>The <code>buffy</code> CLI reads <code>Buffy.toml</code> and the profiles in <code>.buffy/</code>, builds all
+configured language targets in parallel, and (with <code>--publish</code>) pushes them to
+their respective registries or remotes.</p>
+<h2 id="synopsis"><a class="header" href="#synopsis">Synopsis</a></h2>
+<pre><code>buffy [OPTIONS] [COMMAND]
+</code></pre>
+<p>When invoked without a subcommand, Buffy builds every profile in <code>.buffy/</code>. If
+the <code>.buffy/</code> directory does not exist or contains no profiles, Buffy exits
+with a notice and no error.</p>
+<h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
+<ul>
+<li><a href="#buffy"><code>buffy</code></a> — Build all configured profiles.</li>
+<li><a href="#buffy-check"><code>buffy check</code></a> — Verify that required tools are installed.</li>
+</ul>
+<h3 id="buffy"><a class="header" href="#buffy"><code>buffy</code></a></h3>
+<p>Build (and optionally publish) every profile.</p>
+<pre><code class="language-sh">buffy
+</code></pre>
+<p>Each profile is built independently and in parallel. If any profile fails,
+Buffy continues building the others and reports a combined diagnostic at the
+end, listing every profile that succeeded and every profile that failed with
+its underlying error.</p>
+<p>With <code>--publish</code>, every profile that built successfully is then published to
+its configured destination.</p>
+<h3 id="buffy-check"><a class="header" href="#buffy-check"><code>buffy check</code></a></h3>
+<p>Verify that all required external tools are installed and reachable on the
+<code>PATH</code> for the configured profiles. No code is generated and nothing is built.</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<p>The check is profile-aware: it only verifies the tools needed by the
+configured profiles. For instance, a project with only a <code>rust</code> profile does
+not require <code>mvn</code> to be installed.</p>
+<p>If a tool is missing, Buffy emits a diagnostic with the tool name and an
+installation hint specific to common platforms. See the per-language profile
+chapter for the full list of tools each variant requires.</p>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<h3 id="-p---publish"><a class="header" href="#-p---publish"><code>-p, --publish</code></a></h3>
+<p>Publish every profile after a successful build.</p>
+<pre><code class="language-sh">buffy --publish
+</code></pre>
+<p>Each profile is published to the destination configured in its
+<code>.buffy/&lt;name&gt;.toml</code> file:</p>
+<ul>
+<li><code>crate</code> for Rust → the configured Cargo registry (defaulting to crates.io).</li>
+<li><code>npm</code> for JavaScript / TypeScript → the configured npm registry.</li>
+<li><code>maven_central</code> for Java / Kotlin → the Sonatype Central Portal.</li>
+<li><code>git</code> for any language → the configured Git remote, with a <code>v&lt;version&gt;</code> tag.</li>
+</ul>
+<p>If a required environment variable is missing, Buffy reports a diagnostic
+with the variable name and a description of how to obtain it. See
+<a href="#environment-variables-1">Environment Variables</a>.</p>
+<h3 id="--publish-version-version"><a class="header" href="#--publish-version-version"><code>--publish-version &lt;VERSION&gt;</code></a></h3>
+<p>Override the <code>version</code> from <code>Buffy.toml</code> for this run.</p>
+<pre><code class="language-sh">buffy --publish --publish-version 1.2.3
+</code></pre>
+<p>The value must be a valid <a href="https://semver.org/">SemVer</a> version. This is intended for CI pipelines
+that derive the release version from a Git tag rather than committing it into
+<code>Buffy.toml</code>.</p>
+<p>The override applies only to the current invocation; the file on disk is not
+modified.</p>
+<h3 id="--verbose"><a class="header" href="#--verbose"><code>--verbose</code></a></h3>
+<p>Print the full output (both <code>stdout</code> and <code>stderr</code>) of every external tool
+Buffy invokes.</p>
+<pre><code class="language-sh">buffy --verbose
+</code></pre>
+<p>By default, Buffy streams tool output to your terminal as it arrives, prefixed
+with the profile name and the program being run. With <code>--verbose</code>, the
+unfiltered streams are shown, which is useful when debugging:</p>
+<ul>
+<li>Maven build failures, where the relevant <code>[ERROR]</code> lines are mixed in with a
+long <code>[INFO]</code> log on <code>stdout</code>.</li>
+<li>npm install issues that print resolution diagnostics on <code>stdout</code>.</li>
+<li>Cargo warnings about deprecated APIs.</li>
+</ul>
+<p>Without <code>--verbose</code>, Buffy still surfaces the relevant error context when a
+command fails.</p>
+<h3 id="-h---help"><a class="header" href="#-h---help"><code>-h, --help</code></a></h3>
+<p>Print a short help message.</p>
+<h3 id="-v---version"><a class="header" href="#-v---version"><code>-V, --version</code></a></h3>
+<p>Print the Buffy version.</p>
+<h2 id="exit-codes"><a class="header" href="#exit-codes">Exit codes</a></h2>
+<ul>
+<li><code>0</code> — All profiles built (and, with <code>--publish</code>, published) successfully.</li>
+<li><code>1</code> — One or more profiles failed. The diagnostic at the end of the run
+lists every failure.</li>
+</ul>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<p>Build all profiles:</p>
+<pre><code class="language-sh">buffy
+</code></pre>
+<p>Verify the toolchain without building:</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<p>Build and publish using the version from <code>Buffy.toml</code>:</p>
+<pre><code class="language-sh">buffy --publish
+</code></pre>
+<p>Override the version (typical CI usage):</p>
+<pre><code class="language-sh">buffy --publish --publish-version "${GITHUB_REF_NAME#v}"
+</code></pre>
+<p>Get verbose output for debugging:</p>
+<pre><code class="language-sh">buffy --publish --verbose
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
+<h2 id="how-is-buffy-different-from-buf"><a class="header" href="#how-is-buffy-different-from-buf">How is Buffy different from <code>buf</code>?</a></h2>
+<p><a href="https://buf.build/"><code>buf</code></a> is a feature-rich linter, formatter, and code generator that
+orchestrates <code>protoc</code> plugins. Buffy is a build and publishing tool: it cares
+less about lint rules and breaking-change detection, and more about turning a
+set of <code>.proto</code> files into a publishable Go module, Cargo crate, npm package,
+or Maven artifact in one command. The two tools are complementary! You can
+run <code>buf lint</code> and <code>buf breaking</code> in CI alongside <code>buffy --publish</code>.</p>
+<h2 id="why-generate-per-language-packages-instead-of-using-a-buf-schema-registry"><a class="header" href="#why-generate-per-language-packages-instead-of-using-a-buf-schema-registry">Why generate per-language packages instead of using a Buf Schema Registry?</a></h2>
+<p>The Buf Schema Registry is an excellent option if you control both the
+producer and the consumer side and want strong centralization. Buffy is for
+teams that need protocol buffer libraries to land in the <em>native</em> package
+ecosystem of each language; so consumers depend on a normal Cargo crate or
+Maven artifact and don’t have to learn anything new.</p>
+<h2 id="can-i-add-a-new-language-target"><a class="header" href="#can-i-add-a-new-language-target">Can I add a new language target?</a></h2>
+<p>Not as configuration. Language targets are part of Buffy’s source code. The
+existing targets share a common skeleton (a profile, a code generator, a
+<code>build</code> step, a <code>publish</code> step), so adding one is straightforward. See the
+existing modules under <code>targets/</code> in the Buffy repository for templates.</p>
+<h2 id="why-does-the---publish-step-push-with---force"><a class="header" href="#why-does-the---publish-step-push-with---force">Why does the <code>--publish</code> step push with <code>--force</code>?</a></h2>
+<p>Buffy treats the published artifact’s repository (or the registry version) as
+a derived output: every release is rebuilt from scratch. Hand-edits inside a
+generated repository would be overwritten on the next publish, so Buffy
+force-pushes to make the destination an exact mirror of the generated content.
+Files listed in the <code>keep</code> field of <code>git</code> profiles are preserved across
+publishes.</p>
+<h2 id="a-profile-failed-but-the-others-succeeded---what-happens"><a class="header" href="#a-profile-failed-but-the-others-succeeded---what-happens">A profile failed but the others succeeded - what happens?</a></h2>
+<p>Buffy continues building the remaining profiles and reports a combined
+diagnostic at the end, listing every profile that succeeded and every profile
+that failed with its underlying error. The successful profiles are <em>not</em>
+rolled back; if the failure occurred during <code>--publish</code>, the artifacts that
+made it out are already live.</p>
+<h2 id="can-i-use-buffy-with-private-registries"><a class="header" href="#can-i-use-buffy-with-private-registries">Can I use Buffy with private registries?</a></h2>
+<p>Yes:</p>
+<ul>
+<li><strong>Cargo</strong> — Configure the registry index in <code>~/.cargo/config.toml</code> and
+set <code>registry = "&lt;name&gt;"</code> in the profile.</li>
+<li><strong>npm</strong> — Set the <code>registry</code> field in the profile to your registry’s URL
+(e.g., a Verdaccio instance, GitHub Packages, or AWS CodeArtifact).</li>
+<li><strong>Maven</strong> — The <code>maven_central</code> variant is hard-wired to the Sonatype
+Central Portal. For private Maven repositories (Nexus, Artifactory), use
+the <code>git</code> variant for now and consume from the resulting repository, or
+open an issue to discuss adding a generic <code>maven</code> variant.</li>
+</ul>
+<h2 id="why-doesnt-buffy-check-need-network-access"><a class="header" href="#why-doesnt-buffy-check-need-network-access">Why doesn’t <code>buffy check</code> need network access?</a></h2>
+<p><code>buffy check</code> only verifies that the local toolchain is installed. It does
+not invoke <code>protoc</code>, query crates.io for versions, or talk to any registry.
+This makes it suitable as a fast pre-commit hook or CI gate.</p>
+<h2 id="how-do-i-pin-dependency-versions-in-generated-artifacts"><a class="header" href="#how-do-i-pin-dependency-versions-in-generated-artifacts">How do I pin dependency versions in generated artifacts?</a></h2>
+<p>Each language’s profile has optional fields for pinning runtime versions:
+<code>protobuf_version</code> for Java/Kotlin, <code>prost_version</code> and <code>tonic_version</code> for
+Rust, etc. When omitted, Buffy queries the language’s registry for the latest
+release version.</p>
+<h2 id="what-happens-if-buffytoml-and-a-profile-both-define-the-same-field"><a class="header" href="#what-happens-if-buffytoml-and-a-profile-both-define-the-same-field">What happens if <code>Buffy.toml</code> and a profile both define the same field?</a></h2>
+<p>Profiles override the manifest where they overlap. For example, the
+package-level <code>homepage</code> is the default, but the JavaScript profile’s
+<code>homepage</code> field can override it for the JavaScript package only. Most
+profile fields don’t overlap with the manifest; they configure
+language-specific concerns.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="glossary"><a class="header" href="#glossary">Glossary</a></h1>
+<h3 id="artifact"><a class="header" href="#artifact">artifact</a></h3>
+<p>The build output of a single profile - a Go module, Cargo crate, Maven JAR,
+or npm package, produced under <code>target/&lt;profile-name&gt;/</code>. With <code>--publish</code>,
+the artifact is the thing that gets uploaded to a registry or pushed to a
+Git remote.</p>
+<h3 id="manifest"><a class="header" href="#manifest">manifest</a></h3>
+<p>The <code>Buffy.toml</code> file at the root of a Buffy project. Contains the
+language-independent metadata (package name, version, license, authors).
+See <a href="#the-manifest-format">The Manifest Format</a>.</p>
+<h3 id="package"><a class="header" href="#package">package</a></h3>
+<p>The unit of code Buffy operates on: a directory containing a <code>Buffy.toml</code>,
+a directory of <code>.proto</code> files (the <em>source</em>), and zero or more profiles
+under <code>.buffy/</code>. A package produces one artifact per profile.</p>
+<h3 id="profile"><a class="header" href="#profile">profile</a></h3>
+<p>A language-and-variant configuration in the <code>.buffy/</code> directory. Each profile
+is a TOML file selecting one language (e.g., <code>rust</code>, <code>java</code>) and one publishing
+variant (e.g., <code>crate</code>, <code>maven_central</code>, <code>git</code>). The filename without <code>.toml</code>
+becomes the <em>profile name</em>. See <a href="#profiles-format">Profiles Format</a>.</p>
+<h3 id="profile-name"><a class="header" href="#profile-name">profile name</a></h3>
+<p>The filename of a profile in <code>.buffy/</code> without the <code>.toml</code> extension. Profile
+names appear as the subdirectory under <code>target/</code> and as the prefix in build
+output. They must be unique within a project.</p>
+<h3 id="registry"><a class="header" href="#registry">registry</a></h3>
+<p>A central host that distributes packages for a language. Examples:
+<a href="https://crates.io/">crates.io</a> for Rust, <a href="https://npmjs.org">npm</a> for JavaScript and TypeScript,
+<a href="https://central.sonatype.com/">Maven Central</a> for Java and Kotlin. Buffy publishes to a registry via the
+language’s native publishing variant (<code>crate</code>, <code>npm</code>, <code>maven_central</code>).</p>
+<h3 id="source"><a class="header" href="#source">source</a></h3>
+<p>The directory of <code>.proto</code> files configured under the <code>[source]</code> section of
+<code>Buffy.toml</code>. Buffy walks this directory recursively and passes every
+<code>.proto</code> file it finds to <code>protoc</code>. Defaults to <code>src</code> if the section is
+omitted.</p>
+<h3 id="target"><a class="header" href="#target">target</a></h3>
+<p>The Buffy term for one published output (a Cargo crate, a Maven artifact,
+an npm package). Corresponds to one profile. Not to be confused with the
+<code>target/</code> directory, which holds the generated content for every target.</p>
+<h3 id="variant"><a class="header" href="#variant">variant</a></h3>
+<p>The publishing destination for a profile, selected as the second part of the
+nested table name <code>[&lt;language&gt;.&lt;variant&gt;]</code>. Each language defines which
+variants it supports. For example, <code>rust</code> supports <code>crate</code> and <code>git</code>, while
+<code>golang</code> supports only <code>git</code>. See the per-language profile chapters.</p>
 
                     </main>
 

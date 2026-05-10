@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "../searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-548557f9.js"></script>
+        <script src="../toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,6 +181,108 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command-Line Interface</a></h1>
+<p>The <code>buffy</code> CLI reads <code>Buffy.toml</code> and the profiles in <code>.buffy/</code>, builds all
+configured language targets in parallel, and (with <code>--publish</code>) pushes them to
+their respective registries or remotes.</p>
+<h2 id="synopsis"><a class="header" href="#synopsis">Synopsis</a></h2>
+<pre><code>buffy [OPTIONS] [COMMAND]
+</code></pre>
+<p>When invoked without a subcommand, Buffy builds every profile in <code>.buffy/</code>. If
+the <code>.buffy/</code> directory does not exist or contains no profiles, Buffy exits
+with a notice and no error.</p>
+<h2 id="commands"><a class="header" href="#commands">Commands</a></h2>
+<ul>
+<li><a href="#buffy"><code>buffy</code></a> — Build all configured profiles.</li>
+<li><a href="#buffy-check"><code>buffy check</code></a> — Verify that required tools are installed.</li>
+</ul>
+<h3 id="buffy"><a class="header" href="#buffy"><code>buffy</code></a></h3>
+<p>Build (and optionally publish) every profile.</p>
+<pre><code class="language-sh">buffy
+</code></pre>
+<p>Each profile is built independently and in parallel. If any profile fails,
+Buffy continues building the others and reports a combined diagnostic at the
+end, listing every profile that succeeded and every profile that failed with
+its underlying error.</p>
+<p>With <code>--publish</code>, every profile that built successfully is then published to
+its configured destination.</p>
+<h3 id="buffy-check"><a class="header" href="#buffy-check"><code>buffy check</code></a></h3>
+<p>Verify that all required external tools are installed and reachable on the
+<code>PATH</code> for the configured profiles. No code is generated and nothing is built.</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<p>The check is profile-aware: it only verifies the tools needed by the
+configured profiles. For instance, a project with only a <code>rust</code> profile does
+not require <code>mvn</code> to be installed.</p>
+<p>If a tool is missing, Buffy emits a diagnostic with the tool name and an
+installation hint specific to common platforms. See the per-language profile
+chapter for the full list of tools each variant requires.</p>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
+<h3 id="-p---publish"><a class="header" href="#-p---publish"><code>-p, --publish</code></a></h3>
+<p>Publish every profile after a successful build.</p>
+<pre><code class="language-sh">buffy --publish
+</code></pre>
+<p>Each profile is published to the destination configured in its
+<code>.buffy/&lt;name&gt;.toml</code> file:</p>
+<ul>
+<li><code>crate</code> for Rust → the configured Cargo registry (defaulting to crates.io).</li>
+<li><code>npm</code> for JavaScript / TypeScript → the configured npm registry.</li>
+<li><code>maven_central</code> for Java / Kotlin → the Sonatype Central Portal.</li>
+<li><code>git</code> for any language → the configured Git remote, with a <code>v&lt;version&gt;</code> tag.</li>
+</ul>
+<p>If a required environment variable is missing, Buffy reports a diagnostic
+with the variable name and a description of how to obtain it. See
+<a href="environment-variables.html">Environment Variables</a>.</p>
+<h3 id="--publish-version-version"><a class="header" href="#--publish-version-version"><code>--publish-version &lt;VERSION&gt;</code></a></h3>
+<p>Override the <code>version</code> from <code>Buffy.toml</code> for this run.</p>
+<pre><code class="language-sh">buffy --publish --publish-version 1.2.3
+</code></pre>
+<p>The value must be a valid <a href="https://semver.org/">SemVer</a> version. This is intended for CI pipelines
+that derive the release version from a Git tag rather than committing it into
+<code>Buffy.toml</code>.</p>
+<p>The override applies only to the current invocation; the file on disk is not
+modified.</p>
+<h3 id="--verbose"><a class="header" href="#--verbose"><code>--verbose</code></a></h3>
+<p>Print the full output (both <code>stdout</code> and <code>stderr</code>) of every external tool
+Buffy invokes.</p>
+<pre><code class="language-sh">buffy --verbose
+</code></pre>
+<p>By default, Buffy streams tool output to your terminal as it arrives, prefixed
+with the profile name and the program being run. With <code>--verbose</code>, the
+unfiltered streams are shown, which is useful when debugging:</p>
+<ul>
+<li>Maven build failures, where the relevant <code>[ERROR]</code> lines are mixed in with a
+long <code>[INFO]</code> log on <code>stdout</code>.</li>
+<li>npm install issues that print resolution diagnostics on <code>stdout</code>.</li>
+<li>Cargo warnings about deprecated APIs.</li>
+</ul>
+<p>Without <code>--verbose</code>, Buffy still surfaces the relevant error context when a
+command fails.</p>
+<h3 id="-h---help"><a class="header" href="#-h---help"><code>-h, --help</code></a></h3>
+<p>Print a short help message.</p>
+<h3 id="-v---version"><a class="header" href="#-v---version"><code>-V, --version</code></a></h3>
+<p>Print the Buffy version.</p>
+<h2 id="exit-codes"><a class="header" href="#exit-codes">Exit codes</a></h2>
+<ul>
+<li><code>0</code> — All profiles built (and, with <code>--publish</code>, published) successfully.</li>
+<li><code>1</code> — One or more profiles failed. The diagnostic at the end of the run
+lists every failure.</li>
+</ul>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<p>Build all profiles:</p>
+<pre><code class="language-sh">buffy
+</code></pre>
+<p>Verify the toolchain without building:</p>
+<pre><code class="language-sh">buffy check
+</code></pre>
+<p>Build and publish using the version from <code>Buffy.toml</code>:</p>
+<pre><code class="language-sh">buffy --publish
+</code></pre>
+<p>Override the version (typical CI usage):</p>
+<pre><code class="language-sh">buffy --publish --publish-version "${GITHUB_REF_NAME#v}"
+</code></pre>
+<p>Get verbose output for debugging:</p>
+<pre><code class="language-sh">buffy --publish --verbose
+</code></pre>
 
                     </main>
 
@@ -190,6 +292,9 @@
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="../faq.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -201,6 +306,9 @@
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="../faq.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>

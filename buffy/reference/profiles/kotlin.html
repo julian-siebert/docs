@@ -35,10 +35,10 @@
             const path_to_root = "../../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../../searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "../../searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../../toc-548557f9.js"></script>
+        <script src="../../toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -180,7 +180,126 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="kotlin"><a class="header" href="#kotlin">Kotlin</a></h1>
+                        <h1 id="kotlin-profiles"><a class="header" href="#kotlin-profiles">Kotlin Profiles</a></h1>
+<p>The <code>kotlin</code> profile generates a Maven project from your <code>.proto</code> files. Buffy
+uses <code>protoc-gen-java</code> to generate the message classes and packages them
+together with the Kotlin standard library so the artifact can be consumed
+naturally from Kotlin code. Kotlin can call Java protobuf classes directly, so
+no separate Kotlin code generation is required.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-maven_central-variant"><code>maven_central</code></a> — Publish to Maven Central.</li>
+<li><a href="#the-git-variant"><code>git</code></a> — Push the generated Maven project to a Git remote.</li>
+</ul>
+<h2 id="required-tools"><a class="header" href="#required-tools">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler.</li>
+<li><code>java</code> — A JDK (11 or newer recommended).</li>
+<li><code>mvn</code> — Apache Maven; the Kotlin compiler is downloaded automatically as a
+Maven plugin, no separate <code>kotlin</code> binary is required.</li>
+<li><code>gpg</code> — GnuPG, for the <code>maven_central</code> variant.</li>
+<li><code>git</code> — For the <code>git</code> variant.</li>
+</ul>
+<h2 id="the-maven_central-variant"><a class="header" href="#the-maven_central-variant">The <code>maven_central</code> variant</a></h2>
+<p>Generates a Maven project that compiles both Java (from <code>protoc</code>) and Kotlin
+sources, then publishes the resulting JAR (with sources and Javadoc) to Maven
+Central via the Sonatype Central Portal.</p>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre><code class="language-toml"># .buffy/kotlin-example.toml
+[kotlin.maven_central]
+group_id = "io.github.example"
+artifact_id = "tomato-kotlin"
+url = "https://github.com/example/tomato"
+auto_publish = false
+wait_until = "uploaded"
+
+[kotlin.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<h3 id="fields"><a class="header" href="#fields">Fields</a></h3>
+<ul>
+<li><a href="#the-group_id-field"><code>group_id</code></a> — Maven group ID.</li>
+<li><a href="#the-artifact_id-field"><code>artifact_id</code></a> — Maven artifact ID.</li>
+<li><a href="#the-url-field"><code>url</code></a> — Project URL embedded in the POM.</li>
+<li><a href="#the-scm-section"><code>scm</code></a> — Source-control coordinates.</li>
+<li><a href="#the-protobuf_version-field"><code>protobuf_version</code></a> — Pin <code>protobuf-java</code> runtime.</li>
+<li><a href="#the-kotlin_version-field"><code>kotlin_version</code></a> — Pin Kotlin compiler version.</li>
+<li><a href="#the-auto_publish-field"><code>auto_publish</code></a> — Auto-release after upload validates.</li>
+<li><a href="#the-wait_until-field"><code>wait_until</code></a> — How far to wait in the pipeline.</li>
+</ul>
+<h4 id="the-group_id-field"><a class="header" href="#the-group_id-field">The <code>group_id</code> field</a></h4>
+<p>The Maven <code>groupId</code>. Must match a namespace verified for your Sonatype
+account.</p>
+<pre><code class="language-toml">group_id = "io.github.example"
+</code></pre>
+<h4 id="the-artifact_id-field"><a class="header" href="#the-artifact_id-field">The <code>artifact_id</code> field</a></h4>
+<p>The Maven <code>artifactId</code>.</p>
+<pre><code class="language-toml">artifact_id = "tomato-kotlin"
+</code></pre>
+<h4 id="the-url-field"><a class="header" href="#the-url-field">The <code>url</code> field</a></h4>
+<p>The project URL embedded in the POM <code>&lt;url&gt;</code> tag.</p>
+<pre><code class="language-toml">url = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-scm-section"><a class="header" href="#the-scm-section">The <code>scm</code> section</a></h4>
+<pre><code class="language-toml">[kotlin.maven_central.scm]
+connection = "scm:git:git://github.com/example/tomato.git"
+url = "https://github.com/example/tomato"
+</code></pre>
+<h4 id="the-protobuf_version-field"><a class="header" href="#the-protobuf_version-field">The <code>protobuf_version</code> field</a></h4>
+<p>Optional. Pin a specific version of the <code>com.google.protobuf:protobuf-java</code>
+runtime dependency. If omitted, Buffy queries Maven Central for the latest
+release.</p>
+<pre><code class="language-toml">protobuf_version = "4.29.3"
+</code></pre>
+<h4 id="the-kotlin_version-field"><a class="header" href="#the-kotlin_version-field">The <code>kotlin_version</code> field</a></h4>
+<p>Optional. Pin a specific version of the Kotlin compiler and standard library.
+If omitted, Buffy queries Maven Central for the latest release of
+<code>org.jetbrains.kotlin:kotlin-stdlib</code>.</p>
+<pre><code class="language-toml">kotlin_version = "2.0.21"
+</code></pre>
+<h4 id="the-auto_publish-field"><a class="header" href="#the-auto_publish-field">The <code>auto_publish</code> field</a></h4>
+<p>See <a href="java.html#the-auto_publish-field"><code>auto_publish</code> in Java profiles</a>.</p>
+<h4 id="the-wait_until-field"><a class="header" href="#the-wait_until-field">The <code>wait_until</code> field</a></h4>
+<p>See <a href="java.html#the-wait_until-field"><code>wait_until</code> in Java profiles</a>.</p>
+<h3 id="required-environment-variables"><a class="header" href="#required-environment-variables">Required environment variables</a></h3>
+<p>Same as <a href="java.html#required-environment-variables">Java</a>.</p>
+<h3 id="example-consumer-usage"><a class="header" href="#example-consumer-usage">Example consumer usage</a></h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.example&lt;/groupId&gt;
+  &lt;artifactId&gt;tomato-kotlin&lt;/artifactId&gt;
+  &lt;version&gt;0.1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<pre><code class="language-kotlin">import io.github.example.tomato.GreeterOuterClass.HelloRequest
+
+val req = HelloRequest.newBuilder().setName("World").build()
+println(req.name)
+</code></pre>
+<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<p>Like the Java <code>git</code> variant, but with Kotlin tooling configured in the POM.</p>
+<h3 id="example-1"><a class="header" href="#example-1">Example</a></h3>
+<pre><code class="language-toml"># .buffy/kotlin.toml
+[kotlin.git]
+group_id = "com.example"
+artifact_id = "tomato-kotlin"
+url = "https://github.com/example/tomato-kotlin"
+remote = "git@github.com:example/tomato-kotlin.git"
+branch = "main"
+keep = ["README.md"]
+
+[kotlin.git.scm]
+connection = "scm:git:git://github.com/example/tomato-kotlin.git"
+url = "https://github.com/example/tomato-kotlin"
+</code></pre>
+<h3 id="fields-1"><a class="header" href="#fields-1">Fields</a></h3>
+<p>The same fields as <code>maven_central</code>, plus:</p>
+<ul>
+<li><a href="java.html#the-remote-field"><code>remote</code></a> — Git URL the artifact is pushed to.</li>
+<li><a href="java.html#the-branch-field"><code>branch</code></a> — Branch to push to.</li>
+<li><a href="java.html#the-keep-field"><code>keep</code></a> — Files to preserve from the remote.</li>
+</ul>
+<p>These behave identically to the same-named fields in <a href="java.html">Java profiles</a>.</p>
 
                     </main>
 

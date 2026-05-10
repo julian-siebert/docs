@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-d5f32c5b.js";
+            window.path_to_searchindex_js = "../searchindex-53dc5202.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-548557f9.js"></script>
+        <script src="../toc-08d8ddc6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,6 +181,114 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="profiles-format"><a class="header" href="#profiles-format">Profiles Format</a></h1>
+<p>Profiles configure language-specific publishing targets. They live in the
+<code>.buffy/</code> directory next to <code>Buffy.toml</code>, with one TOML file per profile.</p>
+<pre><code>my-project/
+├── Buffy.toml
+├── proto/
+│   └── greeter.proto
+└── .buffy/
+    ├── golang-github.toml
+    ├── java.toml
+    ├── kotlin.toml
+    ├── rust-crates-io.toml
+    ├── js.toml
+    └── typescript.toml
+</code></pre>
+<p>The filename (without <code>.toml</code>) becomes the <em>profile name</em>. The profile name
+is used as the directory under <code>target/</code> where build artifacts are written
+(e.g., <code>target/golang-github/</code>, <code>target/rust-crates-io/</code>) and as the prefix in progress
+output.</p>
+<h2 id="profile-naming"><a class="header" href="#profile-naming">Profile naming</a></h2>
+<p>Profile names must be unique within a project. Buffy reports an error if two
+files in <code>.buffy/</code> resolve to the same name (e.g., on case-insensitive
+filesystems where <code>Rust.toml</code> and <code>rust.toml</code> collide).</p>
+<p>The filename has no relationship to the <em>language</em> the profile configures —
+the language is selected by the table syntax inside the file. A profile
+called <code>internal-go.toml</code> can configure a <code>golang</code> target, and a project may
+contain multiple profiles for the same language under different names (for
+example, one for an internal Git remote and another for a public registry).</p>
+<h2 id="file-structure"><a class="header" href="#file-structure">File structure</a></h2>
+<p>Each profile file selects exactly one language and exactly one publishing
+variant, using nested-table syntax:</p>
+<pre><code class="language-toml">[&lt;language&gt;.&lt;variant&gt;]
+# fields specific to the language and variant
+</code></pre>
+<p>For example, a Rust profile that publishes to crates.io:</p>
+<pre><code class="language-toml">[rust.crate]
+name = "tomato"
+edition = "2021"
+repository = "https://github.com/example/tomato"
+documentation = "https://docs.rs/tomato"
+registry = "crates-io"
+grpc = true
+</code></pre>
+<p>A Go profile that publishes via Git:</p>
+<pre><code class="language-toml">[golang.git]
+module = "github.com/example/tomato-go"
+remote = "git@github.com:example/tomato-go.git"
+branch = "main"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<p>A profile file must contain exactly one <code>[&lt;language&gt;.&lt;variant&gt;]</code> table.
+Multiple variants in the same file are not supported; use multiple profile
+files instead.</p>
+<h2 id="available-languages-and-variants"><a class="header" href="#available-languages-and-variants">Available languages and variants</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Language</th><th>Variants</th><th>Default destination</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="profiles/golang.html"><code>golang</code></a></td><td><code>git</code></td><td>A Git remote (Go modules use Git tags)</td></tr>
+<tr><td><a href="profiles/java.html"><code>java</code></a></td><td><code>maven_central</code>, <code>git</code></td><td>Sonatype Central Portal</td></tr>
+<tr><td><a href="profiles/kotlin.html"><code>kotlin</code></a></td><td><code>maven_central</code>, <code>git</code></td><td>Sonatype Central Portal</td></tr>
+<tr><td><a href="profiles/rust.html"><code>rust</code></a></td><td><code>crate</code>, <code>git</code></td><td>crates.io or another Cargo registry</td></tr>
+<tr><td><a href="profiles/javascript.html"><code>javascript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
+<tr><td><a href="profiles/typescript.html"><code>typescript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each language is documented in its own chapter, with the full list of fields
+per variant.</p>
+<h2 id="the-git-variant"><a class="header" href="#the-git-variant">The <code>git</code> variant</a></h2>
+<p>Every language supports a <code>git</code> variant. Instead of publishing to a registry,
+Buffy commits the generated artifact to a Git repository and tags the commit
+with <code>v&lt;version&gt;</code>. Consumers depend on the package by its Git URL.</p>
+<p>Common fields across all <code>git</code> variants:</p>
+<ul>
+<li><code>remote</code> — The Git URL the artifact is pushed to. SSH URLs are
+recommended; Buffy disables Git’s terminal prompt during operations, so
+HTTPS URLs work only if credentials are pre-cached.</li>
+<li><code>branch</code> — The branch to push to. The previous content is replaced
+(force-push), with the exception of files listed in <code>keep</code>.</li>
+<li><code>keep</code> — A list of paths to fetch from the remote before committing,
+preserving them across publishes. Useful for human-maintained files such
+as <code>README.md</code> that should not be overwritten by code generation.</li>
+</ul>
+<p>The exact list of fields varies by language because the build artifact
+itself is language-specific (a <code>Cargo.toml</code>, a Maven POM, a <code>package.json</code>,
+etc.) and those fields are part of the profile.</p>
+<h2 id="build-output"><a class="header" href="#build-output">Build output</a></h2>
+<p>Each profile is built into its own directory under <code>target/</code>:</p>
+<pre><code>target/
+├── golang/        # output of the `golang.toml` profile
+├── java/          # output of the `java.toml` profile
+└── ...
+</code></pre>
+<p>The directory is cleared at the start of each build, so all generated content
+reflects the current run. Buffy automatically adds <code>target/</code> to a <code>.gitignore</code>
+at the repository root.</p>
+<h2 id="parallelism"><a class="header" href="#parallelism">Parallelism</a></h2>
+<p>All profiles are built in parallel. With <code>--publish</code>, the publish step is
+also parallel. If any profile fails, Buffy continues with the others and
+reports a combined diagnostic at the end of the run, listing every profile
+that succeeded and every profile that failed with its underlying error.</p>
+<h2 id="environment-variables"><a class="header" href="#environment-variables">Environment variables</a></h2>
+<p>Most variants require credentials to publish, supplied via environment
+variables. See <a href="environment-variables.html">Environment Variables</a> for the
+complete list.</p>
 
                     </main>
 

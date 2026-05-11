@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-3dc562f0.js";
+            window.path_to_searchindex_js = "searchindex-3a414d30.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-08d8ddc6.js"></script>
+        <script src="toc-8762a9f1.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -328,6 +328,7 @@ platform.</p>
 <li><a href="#rust-profiles">Rust</a> — Publish to crates.io or via Git.</li>
 <li><a href="#javascript-profiles">JavaScript</a> — Publish to npm or via Git.</li>
 <li><a href="#typescript-profiles">TypeScript</a> — Publish to npm or via Git.</li>
+<li><a href="#python-profiles">Python</a> — Publish to Pypi or via Git.</li>
 </ul>
 </li>
 <li><a href="#environment-variables-1">Environment Variables</a> — Credentials and configuration via environment.</li>
@@ -548,6 +549,7 @@ files instead.</p>
 <tr><td><a href="#rust-profiles"><code>rust</code></a></td><td><code>crate</code>, <code>git</code></td><td>crates.io or another Cargo registry</td></tr>
 <tr><td><a href="#javascript-profiles"><code>javascript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
 <tr><td><a href="#typescript-profiles"><code>typescript</code></a></td><td><code>npm</code>, <code>git</code></td><td>npmjs.org or any npm-compatible registry</td></tr>
+<tr><td><a href="#python-profiles"><code>python</code></a></td><td><code>pypi</code>, <code>git</code></td><td>pypi.org</td></tr>
 </tbody>
 </table>
 </div>
@@ -1382,6 +1384,89 @@ keep = ["README.md"]
 <a href="#javascript-profiles">JavaScript profiles</a>.</p>
 <h3 id="example-consumer-usage-1-4"><a class="header" href="#example-consumer-usage-1-4">Example consumer usage</a></h3>
 <pre><code class="language-sh">npm install git+ssh://git@github.com/example/tomato-ts.git#v0.1.0
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="python-profiles"><a class="header" href="#python-profiles">Python Profiles</a></h1>
+<p>The <code>python</code> profile generates a Python package from your <code>.proto</code> files using
+the <code>grpc_tools.protoc</code> plugin (which is the official Python code generator,
+distributed as part of <code>grpcio-tools</code>). The package is published either to
+PyPI (or any PyPI-compatible registry) or to a Git repository.</p>
+<p>Available variants:</p>
+<ul>
+<li><a href="#the-pypi-variant"><code>pypi</code></a> — Publish to PyPI or another PEP 503 registry.</li>
+<li><a href="#the-git-variant-7"><code>git</code></a> — Push the generated package to a Git remote.</li>
+</ul>
+<h2 id="required-tools-6"><a class="header" href="#required-tools-6">Required tools</a></h2>
+<ul>
+<li><code>protoc</code> — Protocol Buffers compiler (used via <code>grpcio-tools</code>).</li>
+<li><code>python3</code> — Python 3.9 or newer.</li>
+<li><code>grpcio-tools</code> — Python module providing the protoc-based code generator.</li>
+<li><code>build</code> — PEP 517 build module, used to produce sdist and wheel.</li>
+<li><code>twine</code> — PyPI upload tool (only for the <code>pypi</code> variant).</li>
+<li><code>git</code> — For the <code>git</code> variant.</li>
+</ul>
+<p>Install the Python tooling:</p>
+<pre><code class="language-sh">pip install grpcio-tools build twine
+</code></pre>
+<h2 id="the-pypi-variant"><a class="header" href="#the-pypi-variant">The <code>pypi</code> variant</a></h2>
+<p>Generates a Python package under <code>target/&lt;profile&gt;/</code>, runs <code>python -m build</code>
+to produce sdist and wheel under <code>dist/</code>, then uploads them with <code>twine</code>.</p>
+<h3 id="example-6"><a class="header" href="#example-6">Example</a></h3>
+<pre><code class="language-toml"># .buffy/python.toml
+[python.pypi]
+name = "tomato-proto"
+repository_url = "https://upload.pypi.org/legacy/"
+repository = "https://github.com/example/tomato"
+grpc = true
+</code></pre>
+<h3 id="fields-6"><a class="header" href="#fields-6">Fields</a></h3>
+<ul>
+<li><code>name</code> — PyPI package name. Hyphens are converted to underscores for the
+importable module name.</li>
+<li><code>repository_url</code> — The PyPI-compatible upload endpoint. Default is the
+public PyPI; use <code>https://test.pypi.org/legacy/</code> for testing.</li>
+<li><code>repository</code> — URL to the source repository.</li>
+<li><code>homepage</code> — Optional override of the global homepage.</li>
+<li><code>grpc</code> — When <code>true</code>, generates gRPC service stubs via
+<code>--grpc_python_out=...</code>.</li>
+<li><code>protobuf_version</code> — Optional pin for the <code>protobuf</code> runtime dependency.</li>
+<li><code>grpcio_version</code> — Optional pin for the <code>grpcio</code> runtime dependency.</li>
+</ul>
+<h3 id="required-environment-variables-5"><a class="header" href="#required-environment-variables-5">Required environment variables</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Variable</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>PYPI_TOKEN</code></td><td>API token for the configured PyPI</td></tr>
+</tbody>
+</table>
+</div>
+<p>Tokens are created at https://pypi.org/manage/account/token/ (or the
+equivalent path on a private registry). Include the <code>pypi-</code> prefix.</p>
+<h3 id="example-consumer-usage-6"><a class="header" href="#example-consumer-usage-6">Example consumer usage</a></h3>
+<pre><code class="language-sh">pip install tomato-proto
+</code></pre>
+<pre><code class="language-python">from tomato_proto import greeter_pb2
+
+req = greeter_pb2.HelloRequest(name="World")
+print(req.name)
+</code></pre>
+<h2 id="the-git-variant-7"><a class="header" href="#the-git-variant-7">The <code>git</code> variant</a></h2>
+<p>Generates the same package as <code>pypi</code>, but commits and tags it to a Git
+repository.</p>
+<h3 id="example-1-6"><a class="header" href="#example-1-6">Example</a></h3>
+<pre><code class="language-toml">[python.git]
+name = "tomato-proto"
+remote = "git@github.com:example/tomato-py.git"
+branch = "main"
+repository = "https://github.com/example/tomato-py"
+grpc = true
+keep = ["README.md"]
+</code></pre>
+<h3 id="example-consumer-usage-1-5"><a class="header" href="#example-consumer-usage-1-5">Example consumer usage</a></h3>
+<pre><code class="language-sh">pip install git+https://github.com/example/tomato-py@v0.1.0
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="environment-variables-1"><a class="header" href="#environment-variables-1">Environment Variables</a></h1>
